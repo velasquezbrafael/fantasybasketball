@@ -65,6 +65,16 @@ export async function getLatestPowerRankings(seasonId: number) {
   return data ?? [];
 }
 
+export async function getLeagueAwards(seasonId: number) {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("league_awards")
+    .select("*")
+    .eq("season_id", seasonId)
+    .order("id", { ascending: true });
+  return data ?? [];
+}
+
 export async function getTransactions(seasonId: number, limit = 50) {
   const supabase = getSupabaseServiceClient();
   const { data } = await supabase

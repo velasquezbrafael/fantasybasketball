@@ -7,6 +7,7 @@ import {
   getTeams,
   getTransactions,
 } from "@/lib/data";
+import { computeWeeklyWinners } from "@/lib/payouts";
 import EmptyState from "@/components/EmptyState";
 
 export const dynamic = "force-dynamic";
@@ -39,15 +40,18 @@ export default async function DashboardPage() {
     );
   }
 
-  const [teams, powerRankings, transactions] = await Promise.all([
+  const [teams, powerRankings, transactions, allMatchups] = await Promise.all([
     getTeams(season.id),
     getLatestPowerRankings(season.id),
     getTransactions(season.id, 5),
+    getMatchups(season.id),
   ]);
 
-  const currentPeriodMatchups = season.synced_at
-    ? await getMatchups(season.id, powerRankings[0]?.matchup_period_id)
+  const currentPeriodMatchups = powerRankings[0]?.matchup_period_id
+    ? allMatchups.filter((m) => m.matchup_period_id === powerRankings[0].matchup_period_id)
     : [];
+
+  const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
 
   const topTeams = [...teams]
     .sort((a, b) => b.win_pct - a.win_pct)
@@ -64,11 +68,35 @@ export default async function DashboardPage() {
           </p>
         </div>
         <div className="flex gap-2 text-sm">
+          <Link href="/pot" className="px-3 py-1.5 rounded-md border border-border hover:bg-surface-2">
+            The Pot →
+          </Link>
           <Link href="/standings" className="px-3 py-1.5 rounded-md border border-border hover:bg-surface-2">
             Full standings →
           </Link>
         </div>
       </div>
+
+      {latestWeeklyWinner && (
+        <div className="card p-4 flex items-center justify-between bg-gradient-to-r from-surface to-surface-2 border-accent/30">
+          <div>
+            <p className="text-xs font-semibold text-accent uppercase tracking-wide">
+              Week {latestWeeklyWinner.matchupPeriodId} winner — $5
+            </p>
+            <p className="font-semibold mt-1">
+              {latestWeeklyWinner.teamEspnIds
+                .map((id) => teamNameFor(teams, id))
+                .join(" & ")}
+              {latestWeeklyWinner.teamEspnIds.length > 1 && (
+                <span className="text-muted font-normal"> (tied)</span>
+              )}
+            </p>
+          </div>
+          <p className="text-2xl font-semibold tabular-nums text-accent">
+            {latestWeeklyWinner.score.toFixed(0)}
+          </p>
+        </div>
+      )}
 
       <section>
         <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">

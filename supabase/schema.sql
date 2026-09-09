@@ -71,6 +71,18 @@ create table if not exists transactions (
   unique (season_id, espn_transaction_id)
 );
 
+create table if not exists league_awards (
+  id bigserial primary key,
+  season_id bigint references seasons(id) on delete cascade,
+  category text not null,          -- e.g. "Best draft pick"
+  detail text,                     -- e.g. "(player rating x # pick)"
+  amount numeric,                  -- null for non-cash awards
+  winner_team_espn_id int,         -- null until decided
+  winner_note text,                -- free text, e.g. player name or manager name
+  updated_at timestamptz default now(),
+  unique (season_id, category)
+);
+
 create index if not exists idx_teams_season on teams(season_id);
 create index if not exists idx_matchups_season on matchups(season_id);
 create index if not exists idx_standings_season on standings_snapshots(season_id);
@@ -90,3 +102,6 @@ create policy "public read teams" on teams for select using (true);
 create policy "public read matchups" on matchups for select using (true);
 create policy "public read standings_snapshots" on standings_snapshots for select using (true);
 create policy "public read transactions" on transactions for select using (true);
+
+alter table league_awards enable row level security;
+create policy "public read league_awards" on league_awards for select using (true);

@@ -5,6 +5,7 @@ const links = [
   { href: "/standings", label: "Standings" },
   { href: "/matchups", label: "Matchups" },
   { href: "/power-rankings", label: "Power Rankings" },
+  { href: "/pot", label: "The Pot" },
   { href: "/transactions", label: "Transactions" },
   { href: "/history", label: "History" },
 ];
