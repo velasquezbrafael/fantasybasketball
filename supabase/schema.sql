@@ -25,6 +25,7 @@ create table if not exists teams (
   streak_type text,
   streak_length int default 0,
   playoff_seed int,
+  final_rank int,                  -- ESPN's own final placement after playoffs; null until decided
   updated_at timestamptz default now(),
   unique (season_id, espn_team_id)
 );
@@ -39,6 +40,13 @@ create table if not exists matchups (
   away_team_id int,                -- espn_team_id, null on a bye
   away_score numeric,
   winner text,                     -- HOME | AWAY | TIE | UNDECIDED
+  playoff_tier_type text,          -- null = regular season; WINNERS_BRACKET | LOSERS_CONSOLATION_LADDER | WINNERS_CONSOLATION_LADDER
+  home_cat_wins int,                -- category (H2H Each Category) record for the week, e.g. 6-3-0
+  home_cat_losses int,
+  home_cat_ties int,
+  away_cat_wins int,
+  away_cat_losses int,
+  away_cat_ties int,
   updated_at timestamptz default now(),
   unique (season_id, espn_matchup_id)
 );

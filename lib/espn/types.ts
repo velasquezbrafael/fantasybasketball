@@ -5,12 +5,22 @@
 
 export interface EspnTeam {
   id: number;
-  location: string;
-  nickname: string;
+  // `name` is the current, user-set display name ("The Bol Bol's"). Older
+  // ESPN league data sometimes only has `location`/`nickname` instead —
+  // both are kept so teamName() can fall back gracefully.
+  name?: string;
+  location?: string;
+  nickname?: string;
   abbrev: string;
   logo?: string;
   record: {
     overall: {
+      // For a category-scoring (H2H Each Category) league, these are
+      // CATEGORY win/loss/tie tallies across the season (e.g. 71-63-1 for
+      // a 9-cat league over 15 weeks), not matchup counts — this matches
+      // what ESPN's own "REC" column shows. pointsFor/pointsAgainst are
+      // always 0 for category leagues; they only mean something in a
+      // points-scoring league.
       wins: number;
       losses: number;
       ties: number;
@@ -22,6 +32,11 @@ export interface EspnTeam {
     };
   };
   playoffSeed?: number;
+  // ESPN's own computed final standing after playoffs — 0/absent until
+  // the playoff bracket is decided. This is the source of truth for who
+  // actually won 1st/2nd/3rd, since that's a bracket result, not just
+  // whoever had the best regular-season record.
+  rankCalculatedFinal?: number;
   points?: number;
   owners?: string[];
 }

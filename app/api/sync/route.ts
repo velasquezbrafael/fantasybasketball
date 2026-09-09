@@ -68,6 +68,7 @@ async function syncSeason(
         streak_type: t.streakType,
         streak_length: t.streakLength,
         playoff_seed: t.playoffSeed,
+        final_rank: t.finalRank,
         updated_at: new Date().toISOString(),
       })),
       { onConflict: "season_id,espn_team_id" }
@@ -85,6 +86,13 @@ async function syncSeason(
         away_team_id: m.awayTeamId,
         away_score: m.awayScore,
         winner: m.winner,
+        playoff_tier_type: m.playoffTierType,
+        home_cat_wins: m.homeCatWins,
+        home_cat_losses: m.homeCatLosses,
+        home_cat_ties: m.homeCatTies,
+        away_cat_wins: m.awayCatWins,
+        away_cat_losses: m.awayCatLosses,
+        away_cat_ties: m.awayCatTies,
         updated_at: new Date().toISOString(),
       })),
       { onConflict: "season_id,espn_matchup_id" }

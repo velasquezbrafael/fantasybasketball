@@ -14,11 +14,19 @@ export default async function StandingsPage() {
 
   const teams = await getTeams(season.id);
   const sorted = [...teams].sort((a, b) => b.win_pct - a.win_pct);
+  const seasonDecided = teams.some((t) => t.final_rank != null);
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Standings</h1>
-      <div className="card overflow-hidden">
+      <div>
+        <h1 className="text-2xl font-semibold">Standings</h1>
+        <p className="text-muted text-sm mt-1">
+          Record is the category record (9-Categories league) — {seasonDecided
+            ? "the playoff bracket is decided, so Final Rank is the real result."
+            : "sorted by regular-season win% until the playoff bracket decides it."}
+        </p>
+      </div>
+      <div className="card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-muted text-xs uppercase tracking-wide">
             <tr>
@@ -26,16 +34,18 @@ export default async function StandingsPage() {
               <th className="text-left px-4 py-3 font-medium">Team</th>
               <th className="text-right px-4 py-3 font-medium">Record</th>
               <th className="text-right px-4 py-3 font-medium">Win%</th>
-              <th className="text-right px-4 py-3 font-medium">PF</th>
-              <th className="text-right px-4 py-3 font-medium">PA</th>
               <th className="text-right px-4 py-3 font-medium">Streak</th>
+              <th className="text-right px-4 py-3 font-medium">Final Rank</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((t, i) => (
               <tr key={t.id} className="border-t border-border">
                 <td className="px-4 py-3 text-muted">{i + 1}</td>
-                <td className="px-4 py-3 font-medium">{t.name}</td>
+                <td className="px-4 py-3 font-medium">
+                  {t.name}
+                  {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
+                </td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {t.wins}-{t.losses}
                   {t.ties ? `-${t.ties}` : ""}
@@ -43,10 +53,11 @@ export default async function StandingsPage() {
                 <td className="px-4 py-3 text-right tabular-nums">
                   {(t.win_pct * 100).toFixed(1)}%
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">{t.points_for.toFixed(0)}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{t.points_against.toFixed(0)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {t.streak_type ? `${t.streak_type === "WIN" ? "W" : "L"}${t.streak_length}` : "—"}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums">
+                  {t.final_rank != null ? `#${t.final_rank}` : "—"}
                 </td>
               </tr>
             ))}

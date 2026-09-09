@@ -8,6 +8,7 @@ import {
   getTransactions,
 } from "@/lib/data";
 import { computeWeeklyWinners } from "@/lib/payouts";
+import { matchupSideRecord } from "@/lib/format";
 import EmptyState from "@/components/EmptyState";
 
 export const dynamic = "force-dynamic";
@@ -93,7 +94,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <p className="text-2xl font-semibold tabular-nums text-accent">
-            {latestWeeklyWinner.score.toFixed(0)}
+            {latestWeeklyWinner.record}
           </p>
         </div>
       )}
@@ -117,10 +118,13 @@ export default async function DashboardPage() {
                   </span>
                 )}
               </div>
-              <p className="font-semibold mt-2">{t.name}</p>
+              <p className="font-semibold mt-2">
+                {t.name}
+                {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
+              </p>
               <p className="text-muted text-sm mt-1">
                 {t.wins}-{t.losses}
-                {t.ties ? `-${t.ties}` : ""} · {t.points_for.toFixed(0)} PF
+                {t.ties ? `-${t.ties}` : ""}
               </p>
             </div>
           ))}
@@ -138,7 +142,7 @@ export default async function DashboardPage() {
               <div>
                 <p className="font-medium">{teamNameFor(teams, m.home_team_id)}</p>
                 <p className="text-2xl font-semibold tabular-nums">
-                  {Number(m.home_score ?? 0).toFixed(0)}
+                  {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
                 </p>
               </div>
               <span className="text-muted text-xs px-2">vs</span>
@@ -147,7 +151,9 @@ export default async function DashboardPage() {
                   {m.away_team_id ? teamNameFor(teams, m.away_team_id) : "Bye"}
                 </p>
                 <p className="text-2xl font-semibold tabular-nums">
-                  {m.away_score != null ? Number(m.away_score).toFixed(0) : "—"}
+                  {m.away_team_id
+                    ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
+                    : "—"}
                 </p>
               </div>
             </div>

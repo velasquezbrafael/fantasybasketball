@@ -53,7 +53,12 @@ export default async function PotPage() {
                 <p className={`text-xs font-semibold uppercase tracking-wide ${placeStyle[s.place]}`}>
                   {s.place}
                 </p>
-                <p className="font-medium mt-2">{s.team.name}</p>
+                <p className="font-medium mt-2">
+                  {s.team.name}
+                  {s.team.abbrev && (
+                    <span className="text-muted text-xs font-normal ml-1.5">{s.team.abbrev}</span>
+                  )}
+                </p>
                 <p className="text-muted text-sm mt-1">
                   {s.team.wins}-{s.team.losses}
                   {s.team.ties ? `-${s.team.ties}` : ""}
@@ -86,7 +91,7 @@ export default async function PotPage() {
                 {w.teamEspnIds.map(nameFor).join(" & ")}
                 {w.teamEspnIds.length > 1 && <span className="text-muted"> (tied)</span>}
               </span>
-              <span className="tabular-nums font-semibold">{w.score.toFixed(0)} pts</span>
+              <span className="tabular-nums font-semibold">{w.record}</span>
             </div>
           ))}
           {weeklyWinners.length === 0 && (
