@@ -43,26 +43,37 @@ export async function getMatchups(seasonId: number, matchupPeriodId?: number) {
   return data ?? [];
 }
 
+/**
+ * The current power rankings, each row carrying `previousRank` for a
+ * trend arrow. Deliberately NOT "the most recent matchup_period_id" —
+ * the daily cron can insert several snapshots within the same period, so
+ * that would return duplicate rows per team. Instead this pulls a window
+ * of recent snapshots and takes, per team, the newest row as "current"
+ * and the next-newest as "previous" (whatever period each happened to be).
+ */
 export async function getLatestPowerRankings(seasonId: number) {
   const supabase = getSupabaseServiceClient();
-  const { data: latest } = await supabase
-    .from("standings_snapshots")
-    .select("matchup_period_id")
-    .eq("season_id", seasonId)
-    .order("matchup_period_id", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (!latest) return [];
-
   const { data } = await supabase
     .from("standings_snapshots")
     .select("*")
     .eq("season_id", seasonId)
-    .eq("matchup_period_id", latest.matchup_period_id)
-    .order("power_rank", { ascending: true });
+    .order("captured_at", { ascending: false })
+    .limit(500);
 
-  return data ?? [];
+  const rows = data ?? [];
+  const byTeam = new Map<number, typeof rows>();
+  for (const row of rows) {
+    const arr = byTeam.get(row.espn_team_id) ?? [];
+    arr.push(row);
+    byTeam.set(row.espn_team_id, arr);
+  }
+
+  return Array.from(byTeam.values())
+    .map((teamRows) => ({
+      ...teamRows[0],
+      previous_power_rank: teamRows[1]?.power_rank ?? null,
+    }))
+    .sort((a, b) => a.power_rank - b.power_rank);
 }
 
 export async function getLeagueAwards(seasonId: number) {

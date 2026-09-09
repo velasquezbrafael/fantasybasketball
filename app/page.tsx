@@ -8,13 +8,30 @@ import {
   getTransactions,
 } from "@/lib/data";
 import { computeWeeklyWinners } from "@/lib/payouts";
-import { matchupSideRecord } from "@/lib/format";
+import { matchupSideRecord, rankTrend } from "@/lib/format";
 import EmptyState from "@/components/EmptyState";
 
 export const dynamic = "force-dynamic";
 
 function teamNameFor(teams: Awaited<ReturnType<typeof getTeams>>, espnTeamId: number) {
   return teams.find((t) => t.espn_team_id === espnTeamId)?.name ?? `Team ${espnTeamId}`;
+}
+
+function teamAbbrevFor(teams: Awaited<ReturnType<typeof getTeams>>, espnTeamId: number) {
+  return teams.find((t) => t.espn_team_id === espnTeamId)?.abbrev ?? null;
+}
+
+function TrendBadge({ trend }: { trend: number | null }) {
+  if (trend == null || trend === 0) {
+    return <span className="text-muted text-xs w-8 text-center">—</span>;
+  }
+  const up = trend > 0;
+  return (
+    <span className={`text-xs font-medium w-8 text-center ${up ? "text-accent-2" : "text-danger"}`}>
+      {up ? "▲" : "▼"}
+      {Math.abs(trend)}
+    </span>
+  );
 }
 
 export default async function DashboardPage() {
@@ -48,15 +65,14 @@ export default async function DashboardPage() {
     getMatchups(season.id),
   ]);
 
-  const currentPeriodMatchups = powerRankings[0]?.matchup_period_id
-    ? allMatchups.filter((m) => m.matchup_period_id === powerRankings[0].matchup_period_id)
+  // powerRankings is sorted by rank, not recency — take the max period
+  // across all teams' latest snapshots to find "this week".
+  const currentPeriod = Math.max(0, ...powerRankings.map((r) => r.matchup_period_id ?? 0));
+  const currentPeriodMatchups = currentPeriod
+    ? allMatchups.filter((m) => m.matchup_period_id === currentPeriod)
     : [];
 
   const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
-
-  const topTeams = [...teams]
-    .sort((a, b) => b.win_pct - a.win_pct)
-    .slice(0, 3);
 
   return (
     <div className="space-y-8">
@@ -100,35 +116,46 @@ export default async function DashboardPage() {
       )}
 
       <section>
-        <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-          Top of the standings
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {topTeams.map((t, i) => (
-            <div key={t.id} className="card p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-accent">#{i + 1}</span>
-                {t.streak_type && (
-                  <span
-                    className={`text-xs font-medium ${
-                      t.streak_type === "WIN" ? "text-accent-2" : "text-danger"
-                    }`}
-                  >
-                    {t.streak_type === "WIN" ? "W" : "L"}{t.streak_length}
-                  </span>
-                )}
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
+            Power Rankings
+          </h2>
+          <Link href="/power-rankings" className="text-sm text-accent hover:underline">
+            Full breakdown →
+          </Link>
+        </div>
+        <p className="text-muted text-xs -mt-2 mb-3">
+          Record, category differential, recent form, and injury-adjusted roster talent — not just
+          who&rsquo;s hot this week.
+        </p>
+        <div className="card divide-y divide-border">
+          {powerRankings.slice(0, 5).map((r) => (
+            <div key={r.id} className="p-4 flex items-center gap-4">
+              <span className="text-xl font-semibold text-accent w-7 tabular-nums">
+                {r.power_rank}
+              </span>
+              <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
+              <div className="flex-1">
+                <p className="font-medium">
+                  {teamNameFor(teams, r.espn_team_id)}
+                  {teamAbbrevFor(teams, r.espn_team_id) && (
+                    <span className="text-muted text-xs font-normal ml-1.5">
+                      {teamAbbrevFor(teams, r.espn_team_id)}
+                    </span>
+                  )}
+                </p>
+                <p className="text-muted text-xs mt-0.5">
+                  {r.wins}-{r.losses}
+                  {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
+                  {r.injured_count ? (
+                    <span className="text-danger"> · {r.injured_count} banged up</span>
+                  ) : null}
+                </p>
               </div>
-              <p className="font-semibold mt-2">
-                {t.name}
-                {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
-              </p>
-              <p className="text-muted text-sm mt-1">
-                {t.wins}-{t.losses}
-                {t.ties ? `-${t.ties}` : ""}
-              </p>
+              <p className="font-semibold tabular-nums">{Number(r.power_score).toFixed(3)}</p>
             </div>
           ))}
-          {topTeams.length === 0 && <EmptyState />}
+          {powerRankings.length === 0 && <EmptyState />}
         </div>
       </section>
 

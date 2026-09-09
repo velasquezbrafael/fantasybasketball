@@ -26,6 +26,9 @@ create table if not exists teams (
   streak_length int default 0,
   playoff_seed int,
   final_rank int,                  -- ESPN's own final placement after playoffs; null until decided
+  roster_score numeric,            -- 0..1 league-normalized, injury-adjusted roster talent
+  roster_size int,
+  injured_count int,               -- rostered players currently not fully active
   updated_at timestamptz default now(),
   unique (season_id, espn_team_id)
 );
@@ -63,6 +66,15 @@ create table if not exists standings_snapshots (
   points_against numeric,
   power_rank int,
   power_score numeric,
+  -- Each already weighted, so they sum to power_score — a literal
+  -- breakdown of what's driving the ranking (record, category
+  -- differential, recent form, injury-adjusted roster talent).
+  contribution_record numeric,
+  contribution_diff numeric,
+  contribution_form numeric,
+  contribution_roster numeric,
+  roster_strength numeric,         -- 0..1, league-normalized
+  injured_count int,
   captured_at timestamptz default now()
 );
 

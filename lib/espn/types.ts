@@ -39,6 +39,43 @@ export interface EspnTeam {
   rankCalculatedFinal?: number;
   points?: number;
   owners?: string[];
+  // Only present when the `mRoster` view is requested.
+  roster?: {
+    entries: EspnRosterEntry[];
+  };
+}
+
+export interface EspnPlayer {
+  id: number;
+  fullName: string;
+  // ESPN's live injury flag — the vocabulary observed on this league
+  // includes at least ACTIVE and OUT; DAY_TO_DAY / QUESTIONABLE /
+  // DOUBTFUL / SUSPENSION / INJURY_RESERVE are documented ESPN values
+  // that haven't shown up in this league's live data but are handled.
+  injuryStatus?: string;
+  injured?: boolean;
+  defaultPositionId?: number;
+  // Preseason ranking ESPN assigned the player for standard-format
+  // leagues — this is the closest thing to a "player rank" ESPN exposes
+  // without pulling per-stat category projections.
+  draftRanksByRankType?: {
+    STANDARD?: { rank?: number };
+  };
+  // Live, continuously-updated add/drop ownership across all ESPN
+  // leagues — unlike the preseason rank, this reacts to the player's
+  // actual performance and role all season, so it's a good "current
+  // value" signal.
+  ownership?: {
+    percentOwned?: number;
+  };
+}
+
+export interface EspnRosterEntry {
+  playerId: number;
+  lineupSlotId: number; // e.g. bench/IR slots vs. starting slots
+  playerPoolEntry: {
+    player: EspnPlayer;
+  };
 }
 
 export interface EspnMatchupSide {

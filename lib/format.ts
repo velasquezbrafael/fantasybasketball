@@ -21,6 +21,19 @@ export function prettyPlayoffTier(tier: string | null | undefined): string {
 }
 
 /**
+ * Rank movement since the previous synced snapshot. Positive = moved up
+ * (rank number got smaller). Returns null when there's no prior snapshot
+ * to compare against yet (e.g. the first sync of the season).
+ */
+export function rankTrend(
+  currentRank: number | null | undefined,
+  previousRank: number | null | undefined
+): number | null {
+  if (currentRank == null || previousRank == null) return null;
+  return previousRank - currentRank;
+}
+
+/**
  * Score/record for one side of a matchup. This is a 9-category (H2H Each
  * Category) league, so the real result is a category record like "6-3-0",
  * not a point total — ESPN doesn't even populate a numeric score for these.

@@ -26,6 +26,7 @@ async function syncSeason(
     season,
     [
       VIEWS.team,
+      VIEWS.roster,
       VIEWS.matchup,
       VIEWS.matchupScore,
       VIEWS.settings,
@@ -49,6 +50,7 @@ async function syncSeason(
   const teams = normalizeTeams(league);
   const matchups = normalizeMatchups(league);
   const powerRankings = computePowerRankings(teams, matchups);
+  const powerRankingByTeam = new Map(powerRankings.map((r) => [r.espnTeamId, r]));
   const currentPeriod = league.status?.currentMatchupPeriod ?? 0;
 
   if (teams.length > 0) {
@@ -69,6 +71,11 @@ async function syncSeason(
         streak_length: t.streakLength,
         playoff_seed: t.playoffSeed,
         final_rank: t.finalRank,
+        // League-normalized 0..1 roster strength (injury-adjusted player
+        // talent) — see computePowerRankings in lib/espn/transform.ts.
+        roster_score: powerRankingByTeam.get(t.espnTeamId)?.rosterStrength ?? null,
+        roster_size: t.rosterSize,
+        injured_count: t.injuredCount,
         updated_at: new Date().toISOString(),
       })),
       { onConflict: "season_id,espn_team_id" }
@@ -112,6 +119,14 @@ async function syncSeason(
         points_against: r.pointsAgainst,
         power_rank: r.rank,
         power_score: r.powerScore,
+        // Each already weighted, so they sum to power_score — lets the
+        // UI show a literal breakdown of what's driving each team's rank.
+        contribution_record: r.contributions.record,
+        contribution_diff: r.contributions.diff,
+        contribution_form: r.contributions.form,
+        contribution_roster: r.contributions.roster,
+        roster_strength: r.rosterStrength,
+        injured_count: r.injuredCount,
       }))
     );
   }
