@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getMatchups, getTeams } from "@/lib/data";
 import { matchupSideRecord, prettyPlayoffTier } from "@/lib/format";
 import EmptyState from "@/components/EmptyState";
+import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -38,27 +39,30 @@ export default async function MatchupsPage() {
     const home = nameFor(m.home_team_id);
     const away = nameFor(m.away_team_id);
     return (
-      <div className="card p-4 flex items-center justify-between">
-        <div className={homeWon ? "text-foreground" : "text-muted"}>
-          <p className="font-medium">
-            {home?.name ?? `Team ${m.home_team_id}`}
-            {home?.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{home.abbrev}</span>}
-          </p>
-          <p className="text-xl font-semibold tabular-nums">
-            {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
-          </p>
+      <div className="card card-hover p-4 flex items-center justify-between">
+        <div className={`flex items-center gap-3 ${homeWon ? "text-foreground" : "text-muted"}`}>
+          <TeamLogo logo={home?.logo} name={home?.name ?? `Team ${m.home_team_id}`} size={34} />
+          <div>
+            <p className="font-medium">
+              {home?.name ?? `Team ${m.home_team_id}`}
+              {home?.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{home.abbrev}</span>}
+            </p>
+            <p className="text-xl font-semibold tabular-nums">
+              {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
+            </p>
+          </div>
         </div>
-        <span className="text-muted text-xs px-2">vs</span>
-        <div className={`text-right ${awayWon ? "text-foreground" : "text-muted"}`}>
-          <p className="font-medium">
-            {away ? away.name : "Bye"}
-            {away?.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{away.abbrev}</span>}
-          </p>
-          <p className="text-xl font-semibold tabular-nums">
-            {m.away_team_id
-              ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
-              : "—"}
-          </p>
+        <span className="text-muted text-xs px-2 font-display tracking-widest">VS</span>
+        <div className={`flex items-center gap-3 flex-row-reverse text-right ${awayWon ? "text-foreground" : "text-muted"}`}>
+          <TeamLogo logo={away?.logo} name={away ? away.name : "Bye"} size={34} />
+          <div>
+            <p className="font-medium">{away ? away.name : "Bye"}</p>
+            <p className="text-xl font-semibold tabular-nums">
+              {m.away_team_id
+                ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
+                : "—"}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -66,7 +70,7 @@ export default async function MatchupsPage() {
 
   return (
     <div className="space-y-10">
-      <h1 className="text-2xl font-semibold">Matchups</h1>
+      <h1 className="font-display text-4xl tracking-wide text-gradient">Matchups</h1>
 
       {playoffs.length > 0 && (
         <div className="space-y-8">
@@ -111,7 +115,12 @@ export default async function MatchupsPage() {
         ))}
       </div>
 
-      {matchups.length === 0 && <EmptyState />}
+      {matchups.length === 0 && (
+        <EmptyState
+          title="No matchups yet"
+          detail="The schedule shows up here once the season starts."
+        />
+      )}
     </div>
   );
 }

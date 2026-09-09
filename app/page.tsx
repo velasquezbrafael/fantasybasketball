@@ -9,16 +9,16 @@ import {
 } from "@/lib/data";
 import { computeWeeklyWinners } from "@/lib/payouts";
 import { matchupSideRecord, rankTrend } from "@/lib/format";
+import { leagueRules } from "@/lib/leagueConfig";
 import EmptyState from "@/components/EmptyState";
+import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
-function teamNameFor(teams: Awaited<ReturnType<typeof getTeams>>, espnTeamId: number) {
-  return teams.find((t) => t.espn_team_id === espnTeamId)?.name ?? `Team ${espnTeamId}`;
-}
+type TeamRow = Awaited<ReturnType<typeof getTeams>>[number];
 
-function teamAbbrevFor(teams: Awaited<ReturnType<typeof getTeams>>, espnTeamId: number) {
-  return teams.find((t) => t.espn_team_id === espnTeamId)?.abbrev ?? null;
+function teamFor(teams: TeamRow[], espnTeamId: number) {
+  return teams.find((t) => t.espn_team_id === espnTeamId);
 }
 
 function TrendBadge({ trend }: { trend: number | null }) {
@@ -73,121 +73,181 @@ export default async function DashboardPage() {
     : [];
 
   const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
+  const seasonNotStarted = allMatchups.length === 0;
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="text-2xl font-semibold">{season.league_name ?? "Your League"}</h1>
-          <p className="text-muted text-sm mt-1">
-            {season.id} season · last synced{" "}
-            {season.synced_at ? new Date(season.synced_at).toLocaleString() : "never"}
-          </p>
+      <div className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8">
+        <div className="court-decoration" />
+        <div className="relative flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-1">
+              {season.id - 1}-{String(season.id).slice(2)} Season
+            </p>
+            <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
+              {season.league_name ?? "Your League"}
+            </h1>
+            <p className="text-muted text-sm mt-3">
+              Last synced {season.synced_at ? new Date(season.synced_at).toLocaleString() : "never"}
+            </p>
+          </div>
+          <div className="flex gap-2 text-sm">
+            <Link
+              href="/pot"
+              className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
+            >
+              The Pot →
+            </Link>
+            <Link
+              href="/standings"
+              className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
+            >
+              Full standings →
+            </Link>
+          </div>
         </div>
-        <div className="flex gap-2 text-sm">
-          <Link href="/pot" className="px-3 py-1.5 rounded-md border border-border hover:bg-surface-2">
-            The Pot →
-          </Link>
-          <Link href="/standings" className="px-3 py-1.5 rounded-md border border-border hover:bg-surface-2">
-            Full standings →
-          </Link>
+        <div className="relative flex flex-wrap gap-2 mt-6">
+          <span className="stat-chip">
+            <strong>{teams.length}</strong> teams
+          </span>
+          <span className="stat-chip">
+            {currentPeriod > 0 ? (
+              <>
+                Week <strong>{currentPeriod}</strong>
+              </>
+            ) : (
+              "Preseason"
+            )}
+          </span>
+          <span className="stat-chip">
+            Pot <strong>${leagueRules.totalPot}</strong>
+          </span>
+          <span className="stat-chip">
+            Buy-in <strong>${leagueRules.buyIn}</strong>
+          </span>
         </div>
       </div>
 
-      {latestWeeklyWinner && (
-        <div className="card p-4 flex items-center justify-between bg-gradient-to-r from-surface to-surface-2 border-accent/30">
-          <div>
-            <p className="text-xs font-semibold text-accent uppercase tracking-wide">
-              Week {latestWeeklyWinner.matchupPeriodId} winner — $5
-            </p>
-            <p className="font-semibold mt-1">
-              {latestWeeklyWinner.teamEspnIds
-                .map((id) => teamNameFor(teams, id))
-                .join(" & ")}
-              {latestWeeklyWinner.teamEspnIds.length > 1 && (
-                <span className="text-muted font-normal"> (tied)</span>
-              )}
-            </p>
-          </div>
-          <p className="text-2xl font-semibold tabular-nums text-accent">
-            {latestWeeklyWinner.record}
-          </p>
-        </div>
-      )}
+      {seasonNotStarted ? (
+        <EmptyState
+          title="Season hasn't tipped off yet"
+          detail="Rosters and matchups will show up here once the draft happens and games start."
+        />
+      ) : (
+        <>
+          {latestWeeklyWinner && (
+            <div className="card card-hover glow-accent p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <TeamLogo
+                  logo={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.logo}
+                  name={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.name ?? "Team"}
+                  size={40}
+                />
+                <div>
+                  <p className="text-xs font-semibold text-accent uppercase tracking-wide">
+                    Week {latestWeeklyWinner.matchupPeriodId} winner — $5
+                  </p>
+                  <p className="font-semibold mt-0.5">
+                    {latestWeeklyWinner.teamEspnIds
+                      .map((id) => teamFor(teams, id)?.name ?? `Team ${id}`)
+                      .join(" & ")}
+                    {latestWeeklyWinner.teamEspnIds.length > 1 && (
+                      <span className="text-muted font-normal"> (tied)</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <p className="text-2xl font-semibold tabular-nums text-accent">
+                {latestWeeklyWinner.record}
+              </p>
+            </div>
+          )}
 
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
-            Power Rankings
-          </h2>
-          <Link href="/power-rankings" className="text-sm text-accent hover:underline">
-            Full breakdown →
-          </Link>
-        </div>
-        <p className="text-muted text-xs -mt-2 mb-3">
-          Record, category differential, recent form, and injury-adjusted roster talent — not just
-          who&rsquo;s hot this week.
-        </p>
-        <div className="card divide-y divide-border">
-          {powerRankings.slice(0, 5).map((r) => (
-            <div key={r.id} className="p-4 flex items-center gap-4">
-              <span className="text-xl font-semibold text-accent w-7 tabular-nums">
-                {r.power_rank}
-              </span>
-              <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
-              <div className="flex-1">
-                <p className="font-medium">
-                  {teamNameFor(teams, r.espn_team_id)}
-                  {teamAbbrevFor(teams, r.espn_team_id) && (
-                    <span className="text-muted text-xs font-normal ml-1.5">
-                      {teamAbbrevFor(teams, r.espn_team_id)}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
+                Power Rankings
+              </h2>
+              <Link href="/power-rankings" className="text-sm text-accent hover:underline">
+                Full breakdown →
+              </Link>
+            </div>
+            <p className="text-muted text-xs -mt-2 mb-3">
+              Record, category differential, recent form, and injury-adjusted roster talent — not
+              just who&rsquo;s hot this week.
+            </p>
+            <div className="card divide-y divide-border">
+              {powerRankings.slice(0, 5).map((r) => {
+                const team = teamFor(teams, r.espn_team_id);
+                return (
+                  <div key={r.id} className="p-4 flex items-center gap-4">
+                    <span className="text-xl font-semibold text-accent w-7 tabular-nums">
+                      {r.power_rank}
                     </span>
-                  )}
-                </p>
-                <p className="text-muted text-xs mt-0.5">
-                  {r.wins}-{r.losses}
-                  {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
-                  {r.injured_count ? (
-                    <span className="text-danger"> · {r.injured_count} banged up</span>
-                  ) : null}
-                </p>
-              </div>
-              <p className="font-semibold tabular-nums">{Number(r.power_score).toFixed(3)}</p>
+                    <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
+                    <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {team?.name ?? `Team ${r.espn_team_id}`}
+                        {team?.abbrev && (
+                          <span className="text-muted text-xs font-normal ml-1.5">{team.abbrev}</span>
+                        )}
+                      </p>
+                      <p className="text-muted text-xs mt-0.5">
+                        {r.wins}-{r.losses}
+                        {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
+                        {r.injured_count ? (
+                          <span className="text-danger"> · {r.injured_count} banged up</span>
+                        ) : null}
+                      </p>
+                    </div>
+                    <p className="font-semibold tabular-nums">{Number(r.power_score).toFixed(3)}</p>
+                  </div>
+                );
+              })}
+              {powerRankings.length === 0 && <EmptyState />}
             </div>
-          ))}
-          {powerRankings.length === 0 && <EmptyState />}
-        </div>
-      </section>
+          </section>
 
-      <section>
-        <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-          This week&rsquo;s matchups
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {currentPeriodMatchups.map((m) => (
-            <div key={m.id} className="card p-4 flex items-center justify-between">
-              <div>
-                <p className="font-medium">{teamNameFor(teams, m.home_team_id)}</p>
-                <p className="text-2xl font-semibold tabular-nums">
-                  {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
-                </p>
-              </div>
-              <span className="text-muted text-xs px-2">vs</span>
-              <div className="text-right">
-                <p className="font-medium">
-                  {m.away_team_id ? teamNameFor(teams, m.away_team_id) : "Bye"}
-                </p>
-                <p className="text-2xl font-semibold tabular-nums">
-                  {m.away_team_id
-                    ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
-                    : "—"}
-                </p>
-              </div>
+          <section>
+            <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+              This week&rsquo;s matchups
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {currentPeriodMatchups.map((m) => {
+                const home = teamFor(teams, m.home_team_id);
+                const away = m.away_team_id ? teamFor(teams, m.away_team_id) : null;
+                return (
+                  <div key={m.id} className="card card-hover p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <TeamLogo logo={home?.logo} name={home?.name ?? "Team"} size={36} />
+                      <div>
+                        <p className="font-medium">{home?.name ?? `Team ${m.home_team_id}`}</p>
+                        <p className="text-2xl font-semibold tabular-nums">
+                          {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-muted text-xs px-2 font-display tracking-widest">VS</span>
+                    <div className="flex items-center gap-3 flex-row-reverse text-right">
+                      <TeamLogo logo={away?.logo} name={away?.name ?? "Bye"} size={36} />
+                      <div>
+                        <p className="font-medium">{away ? away.name : "Bye"}</p>
+                        <p className="text-2xl font-semibold tabular-nums">
+                          {m.away_team_id
+                            ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
+                            : "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {currentPeriodMatchups.length === 0 && <EmptyState />}
             </div>
-          ))}
-          {currentPeriodMatchups.length === 0 && <EmptyState />}
-        </div>
-      </section>
+          </section>
+        </>
+      )}
 
       <section>
         <div className="flex items-center justify-between mb-3">

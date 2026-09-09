@@ -5,6 +5,7 @@ export interface TeamRow {
   espn_team_id: number;
   name: string;
   abbrev: string | null;
+  logo: string | null;
   wins: number;
   losses: number;
   ties: number;

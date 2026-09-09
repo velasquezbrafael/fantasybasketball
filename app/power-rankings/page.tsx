@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getLatestPowerRankings, getTeams } from "@/lib/data";
 import { rankTrend } from "@/lib/format";
 import EmptyState from "@/components/EmptyState";
+import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export default async function PowerRankingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Power Rankings</h1>
+        <h1 className="font-display text-4xl tracking-wide text-gradient">Power Rankings</h1>
         <p className="text-muted text-sm mt-1 max-w-2xl">
           A blend of four signals, not just the raw ESPN standings: category record (30%),
           category win-loss differential (15%), form over the last 3 regular-season weeks (15%),
@@ -74,7 +75,7 @@ export default async function PowerRankingsPage() {
         </p>
       </div>
 
-      <div className="card divide-y divide-border">
+      <div className="card divide-y divide-border overflow-hidden">
         <div className="p-3 flex items-center gap-4 text-xs text-muted uppercase tracking-wide">
           <span className="w-7 text-center">#</span>
           <span className="w-10 text-center">Trend</span>
@@ -86,11 +87,12 @@ export default async function PowerRankingsPage() {
           const team = teamFor(r.espn_team_id);
           const injured = r.injured_count ?? 0;
           return (
-            <div key={r.id} className="p-4 flex items-center gap-4">
+            <div key={r.id} className="p-4 flex items-center gap-4 card-hover">
               <span className="text-xl font-semibold text-accent w-7 text-center tabular-nums">
                 {r.power_rank}
               </span>
               <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
+              <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">
                   {team?.name ?? `Team ${r.espn_team_id}`}

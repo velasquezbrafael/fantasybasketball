@@ -3,8 +3,23 @@ import { getCurrentSeason, getLeagueAwards, getMatchups, getTeams } from "@/lib/
 import { computePotStandings, computeWeeklyWinners } from "@/lib/payouts";
 import { leagueRules } from "@/lib/leagueConfig";
 import EmptyState from "@/components/EmptyState";
+import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
+
+const MEDAL_CLASS: Record<string, string> = {
+  "1st": "medal-1",
+  "2nd": "medal-2",
+  "3rd": "medal-3",
+  Last: "medal-last",
+};
+
+const MEDAL_ICON: Record<string, string> = {
+  "1st": "🏆",
+  "2nd": "🥈",
+  "3rd": "🥉",
+  Last: "💀",
+};
 
 export default async function PotPage() {
   if (!isSupabaseConfigured()) {
@@ -22,19 +37,13 @@ export default async function PotPage() {
 
   const potStandings = computePotStandings(teams);
   const weeklyWinners = computeWeeklyWinners(matchups);
-  const nameFor = (id: number) => teams.find((t) => t.espn_team_id === id)?.name ?? `Team ${id}`;
-
-  const placeStyle: Record<string, string> = {
-    "1st": "text-accent",
-    "2nd": "text-foreground",
-    "3rd": "text-foreground",
-    Last: "text-danger",
-  };
+  const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
+  const nameFor = (id: number) => teamFor(id)?.name ?? `Team ${id}`;
 
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-2xl font-semibold">The Pot</h1>
+        <h1 className="font-display text-4xl tracking-wide text-gradient">The Pot</h1>
         <p className="text-muted text-sm mt-1">
           ${leagueRules.buyIn} buy-in × {leagueRules.teamCount} teams = ${leagueRules.totalPot} total pot.
           Updated live off the current standings — not final until the season ends.
@@ -49,17 +58,26 @@ export default async function PotPage() {
           {potStandings.map((s) => {
             const payout = leagueRules.championsPot.payouts.find((p) => p.place === s.place);
             return (
-              <div key={s.place} className="card p-4">
-                <p className={`text-xs font-semibold uppercase tracking-wide ${placeStyle[s.place]}`}>
-                  {s.place}
-                </p>
-                <p className="font-medium mt-2">
-                  {s.team.name}
-                  {s.team.abbrev && (
-                    <span className="text-muted text-xs font-normal ml-1.5">{s.team.abbrev}</span>
-                  )}
-                </p>
-                <p className="text-muted text-sm mt-1">
+              <div
+                key={s.place}
+                className={`card card-hover p-4 border ${MEDAL_CLASS[s.place] ?? ""}`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    {s.place}
+                  </p>
+                  <span className="text-lg leading-none">{MEDAL_ICON[s.place]}</span>
+                </div>
+                <div className="flex items-center gap-2.5 mt-2.5">
+                  <TeamLogo logo={s.team.logo} name={s.team.name} size={32} />
+                  <p className="font-medium leading-tight">
+                    {s.team.name}
+                    {s.team.abbrev && (
+                      <span className="text-muted text-xs font-normal block mt-0.5">{s.team.abbrev}</span>
+                    )}
+                  </p>
+                </div>
+                <p className="text-muted text-sm mt-2">
                   {s.team.wins}-{s.team.losses}
                   {s.team.ties ? `-${s.team.ties}` : ""}
                 </p>
@@ -85,13 +103,18 @@ export default async function PotPage() {
         </h2>
         <div className="card divide-y divide-border">
           {weeklyWinners.map((w) => (
-            <div key={w.matchupPeriodId} className="p-4 flex items-center justify-between text-sm">
-              <span className="text-muted">Week {w.matchupPeriodId}</span>
-              <span className="font-medium">
-                {w.teamEspnIds.map(nameFor).join(" & ")}
-                {w.teamEspnIds.length > 1 && <span className="text-muted"> (tied)</span>}
-              </span>
-              <span className="tabular-nums font-semibold">{w.record}</span>
+            <div key={w.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
+              <span className="text-muted w-16 shrink-0">Week {w.matchupPeriodId}</span>
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                {w.teamEspnIds.slice(0, 1).map((id) => (
+                  <TeamLogo key={id} logo={teamFor(id)?.logo} name={nameFor(id)} size={24} />
+                ))}
+                <span className="font-medium truncate">
+                  {w.teamEspnIds.map(nameFor).join(" & ")}
+                  {w.teamEspnIds.length > 1 && <span className="text-muted"> (tied)</span>}
+                </span>
+              </div>
+              <span className="tabular-nums font-semibold shrink-0">{w.record}</span>
             </div>
           ))}
           {weeklyWinners.length === 0 && (

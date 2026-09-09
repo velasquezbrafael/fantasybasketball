@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -10,26 +13,48 @@ const links = [
   { href: "/history", label: "History" },
 ];
 
-export default function Nav() {
+function BallMark() {
   return (
-    <header className="border-b border-border bg-surface/60 backdrop-blur sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <span className="text-xl">🏀</span>
-          <span className="font-semibold tracking-tight">
+    <span
+      className="relative shrink-0 w-7 h-7 rounded-full"
+      style={{ background: "linear-gradient(135deg, var(--accent), #c9500f)" }}
+    >
+      <span className="absolute inset-0 rounded-full border-2 border-background/80" />
+      <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[2px] bg-background/80" />
+      <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-background/80" />
+    </span>
+  );
+}
+
+export default function Nav() {
+  const pathname = usePathname();
+
+  return (
+    <header className="border-b border-border bg-surface/70 backdrop-blur sticky top-0 z-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <BallMark />
+          <span className="font-display text-xl tracking-wide text-gradient">
             League Tracker
           </span>
         </Link>
         <nav className="flex items-center gap-1 overflow-x-auto text-sm">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="px-3 py-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-2 transition-colors whitespace-nowrap"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {links.map((l) => {
+            const active = l.href === "/" ? pathname === "/" : pathname?.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
+                  active
+                    ? "text-foreground bg-surface-2 font-medium"
+                    : "text-muted hover:text-foreground hover:bg-surface-2"
+                }`}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </header>

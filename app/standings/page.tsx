@@ -1,6 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getTeams } from "@/lib/data";
 import EmptyState from "@/components/EmptyState";
+import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function StandingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Standings</h1>
+        <h1 className="font-display text-4xl tracking-wide text-gradient">Standings</h1>
         <p className="text-muted text-sm mt-1">
           Record is the category record (9-Categories league) — {seasonDecided
             ? "the playoff bracket is decided, so Final Rank is the real result."
@@ -40,11 +41,16 @@ export default async function StandingsPage() {
           </thead>
           <tbody>
             {sorted.map((t, i) => (
-              <tr key={t.id} className="border-t border-border">
+              <tr key={t.id} className="border-t border-border hover:bg-surface-2/60 transition-colors">
                 <td className="px-4 py-3 text-muted">{i + 1}</td>
                 <td className="px-4 py-3 font-medium">
-                  {t.name}
-                  {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
+                  <div className="flex items-center gap-2.5">
+                    <TeamLogo logo={t.logo} name={t.name} size={26} />
+                    <span>
+                      {t.name}
+                      {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {t.wins}-{t.losses}
