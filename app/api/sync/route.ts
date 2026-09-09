@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchEspnLeague, VIEWS, type EspnAuth } from "@/lib/espn/client";
+import { fetchEspnLeague, fetchRecentActivity, VIEWS, type EspnAuth } from "@/lib/espn/client";
 import {
   computePowerRankings,
   normalizeMatchups,
@@ -7,7 +7,6 @@ import {
 } from "@/lib/espn/transform";
 import { resolvePlayerNames } from "@/lib/espn/players";
 import { getSupabaseServiceClient } from "@/lib/supabase/client";
-import type { EspnTransaction } from "@/lib/espn/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -21,6 +20,14 @@ async function syncSeason(
   { historical, auth }: { historical: boolean; auth: EspnAuth }
 ) {
   const supabase = getSupabaseServiceClient();
+
+  // A season rollover (e.g. 2026 -> 2027) leaves the old season's
+  // is_current flag stuck true otherwise — getCurrentSeason() still picks
+  // the right one (highest id wins), but the History page would show
+  // "current" on more than one season.
+  if (!historical) {
+    await supabase.from("seasons").update({ is_current: false }).neq("id", season);
+  }
 
   const league = await fetchEspnLeague(
     season,
@@ -131,7 +138,11 @@ async function syncSeason(
     );
   }
 
-  const transactions: EspnTransaction[] = league.transactions ?? [];
+  // Real transaction data doesn't come back from the main league fetch
+  // (see the comment on VIEWS.transactions) — it lives in a separate
+  // activity-feed endpoint that only exists for the currently-live
+  // season, so this is a no-op (not an error) for historical seasons.
+  const transactions = historical ? [] : await fetchRecentActivity(season, auth);
   if (transactions.length > 0) {
     const allPlayerIds = transactions.flatMap(
       (t) => t.items?.map((i) => i.playerId) ?? []

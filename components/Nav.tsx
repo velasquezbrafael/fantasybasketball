@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Dashboard" },
+  { href: "/power-rankings", label: "Power Rankings" },
   { href: "/standings", label: "Standings" },
   { href: "/matchups", label: "Matchups" },
-  { href: "/power-rankings", label: "Power Rankings" },
+  { href: "/weekly-winners", label: "Weekly Winners" },
   { href: "/pot", label: "The Pot" },
-  { href: "/transactions", label: "Transactions" },
+  { href: "/league-news", label: "League News" },
   { href: "/history", label: "History" },
 ];
 
@@ -45,13 +46,16 @@ export default function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
+                className={`relative px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
                   active
                     ? "text-foreground bg-surface-2 font-medium"
                     : "text-muted hover:text-foreground hover:bg-surface-2"
                 }`}
               >
                 {l.label}
+                {active && (
+                  <span className="absolute left-2.5 right-2.5 -bottom-[13px] h-[2px] rounded-full bg-gradient-to-r from-accent to-accent-2" />
+                )}
               </Link>
             );
           })}

@@ -87,10 +87,12 @@ Refresh `http://localhost:3000` — you should see your league.
 - `/` — dashboard: current standings snapshot, this week's matchups, recent moves
 - `/standings` — full sortable standings table
 - `/matchups` — every matchup, grouped by week
-- `/power-rankings` — power score = 50% win% + 30% point differential + 20% form
-  over the last 3 matchups, recalculated on every sync
-- `/transactions` — waiver claims, free agent adds, and trades with real player
-  names
+- `/power-rankings` — power score = 30% record + 15% differential + 15% recent
+  form + 40% injury-adjusted roster talent, recalculated on every sync
+- `/weekly-winners` — every week's best category record, plus a season leaderboard
+- `/pot` — live payout standings, weekly winners, and league awards
+- `/league-news` — trades/waiver moves as headlines, plus real NBA news for
+  anyone's rostered players (fetched live from ESPN's public site API)
 - `/history` — final standings for every season you've synced
 
 ## Notes & limits

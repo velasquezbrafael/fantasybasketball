@@ -5,6 +5,8 @@ import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
+const MEDAL_ROW_CLASS = ["medal-1", "medal-2", "medal-3"];
+
 export default async function StandingsPage() {
   if (!isSupabaseConfigured()) {
     return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
@@ -41,7 +43,12 @@ export default async function StandingsPage() {
           </thead>
           <tbody>
             {sorted.map((t, i) => (
-              <tr key={t.id} className="border-t border-border hover:bg-surface-2/60 transition-colors">
+              <tr
+                key={t.id}
+                className={`border-t border-border hover:bg-surface-2/60 transition-colors ${
+                  MEDAL_ROW_CLASS[i] ?? ""
+                }`}
+              >
                 <td className="px-4 py-3 text-muted">{i + 1}</td>
                 <td className="px-4 py-3 font-medium">
                   <div className="flex items-center gap-2.5">

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getLeagueAwards, getMatchups, getTeams } from "@/lib/data";
 import { computePotStandings, computeWeeklyWinners } from "@/lib/payouts";
@@ -96,13 +97,18 @@ export default async function PotPage() {
       </section>
 
       <section>
-        <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-          Weekly Winners — ${leagueRules.specialWinningsPot.weekWinner.perWeek} each,{" "}
-          {leagueRules.specialWinningsPot.weekWinner.weeks} weeks ($
-          {leagueRules.specialWinningsPot.weekWinner.total} pot)
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
+            Weekly Winners — ${leagueRules.specialWinningsPot.weekWinner.perWeek} each,{" "}
+            {leagueRules.specialWinningsPot.weekWinner.weeks} weeks ($
+            {leagueRules.specialWinningsPot.weekWinner.total} pot)
+          </h2>
+          <Link href="/weekly-winners" className="text-sm text-accent hover:underline shrink-0 ml-4">
+            Full history →
+          </Link>
+        </div>
         <div className="card divide-y divide-border">
-          {weeklyWinners.map((w) => (
+          {weeklyWinners.slice(0, 5).map((w) => (
             <div key={w.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
               <span className="text-muted w-16 shrink-0">Week {w.matchupPeriodId}</span>
               <div className="flex items-center gap-2 flex-1 min-w-0">

@@ -1,4 +1,4 @@
-import type { EspnLeagueResponse } from "./types";
+import type { EspnLeagueResponse, EspnTransaction } from "./types";
 
 // ESPN migrated this API off fantasy.espn.com to a dedicated read host at
 // some point in 2026. The old host now just 302s to the fantasy homepage
@@ -98,5 +98,122 @@ export const VIEWS = {
   settings: "mSettings",
   standings: "mStandings",
   schedule: "mScoreboard",
+  // Requesting this view on the main league fetch does NOT actually
+  // return a `transactions` array (confirmed against a live league —
+  // the key is simply absent from the response). Kept here because it's
+  // harmless to request, but real transaction data comes from
+  // fetchRecentActivity below instead.
   transactions: "mTransactions2",
 } as const;
+
+// ESPN's own message-type codes for a roster-activity message, as seen in
+// the `communication/` topics feed below. Reverse-engineered (ESPN
+// doesn't document these) — matches what other unofficial ESPN Fantasy
+// API clients have found. Unrecognized codes are ignored rather than
+// guessed at.
+const ACTIVITY_MESSAGE_TYPE: Record<number, "ADD" | "DROP" | "TRADE"> = {
+  178: "ADD", // free agent add
+  180: "ADD", // waiver add
+  179: "DROP",
+  181: "TRADE",
+  239: "TRADE",
+};
+
+interface EspnActivityMessage {
+  messageId?: number;
+  type?: number;
+  from?: number;
+  to?: number;
+  targetId?: number;
+  memberId?: string;
+}
+
+interface EspnActivityTopic {
+  id?: string;
+  type?: string;
+  date?: number;
+  messages?: EspnActivityMessage[];
+}
+
+/**
+ * Real roster transactions (waiver claims, free-agent adds/drops, trades)
+ * live in a completely separate endpoint from the main league fetch — a
+ * per-season "communication group" that ESPN's own app polls for its
+ * activity feed. It only exists for a season that's currently live;
+ * once a season ends ESPN tears the group down (a 404 here just means
+ * "no activity feed for this season anymore", not a real error).
+ */
+export async function fetchRecentActivity(
+  season: number,
+  auth: EspnAuth,
+  limit = 50
+): Promise<EspnTransaction[]> {
+  const filter = {
+    topics: {
+      filterType: { value: ["ACTIVITY_TRANSACTIONS"] },
+      limit,
+      limitPerMessageSet: { value: limit },
+      offset: 0,
+      sortMessageDate: { sortPriority: 1, sortAsc: false },
+      sortTopicDate: { sortPriority: 2, sortAsc: false },
+      filterIncludeMessageTypeIds: { value: [178, 179, 180, 181, 239] },
+    },
+  };
+
+  const res = await fetch(
+    `${BASE}/seasons/${season}/segments/0/leagues/${auth.leagueId}/communication/?view=kona_league_communication`,
+    {
+      headers: {
+        Cookie: `espn_s2=${auth.espnS2}; SWID=${auth.swid}`,
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        Accept: "application/json",
+        "x-fantasy-filter": JSON.stringify(filter),
+      },
+      cache: "no-store",
+    }
+  );
+
+  // 404 = this season's activity feed no longer exists (season is over)
+  // — not an error, just nothing to report.
+  if (res.status === 404) return [];
+  if (!res.ok) return [];
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) return [];
+
+  const json = await res.json();
+  const topics: EspnActivityTopic[] = json?.topics ?? [];
+
+  const transactions: EspnTransaction[] = [];
+  for (const topic of topics) {
+    if (topic.type !== "ACTIVITY_TRANSACTIONS" || !topic.messages) continue;
+
+    const items = topic.messages
+      .map((m) => {
+        const kind = m.type != null ? ACTIVITY_MESSAGE_TYPE[m.type] : undefined;
+        if (!kind || m.targetId == null) return null;
+        return {
+          playerId: m.targetId,
+          type: kind,
+          fromTeamId: m.from || undefined,
+          toTeamId: m.to || undefined,
+        };
+      })
+      .filter((i): i is NonNullable<typeof i> => i !== null);
+
+    if (items.length === 0) continue;
+
+    const isTrade = items.some((i) => i.type === "TRADE");
+    transactions.push({
+      id: topic.id ?? `${season}-${topic.date}`,
+      type: isTrade ? "TRADE_ACCEPT" : items[0].type === "ADD" ? "WAIVER" : "ROSTER",
+      status: "EXECUTED",
+      processDate: topic.date,
+      teamId: items[0].toTeamId ?? items[0].fromTeamId,
+      items,
+    });
+  }
+
+  return transactions;
+}

@@ -6,6 +6,8 @@ import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
 
+const MEDAL_ROW_CLASS = ["medal-1", "medal-2", "medal-3"];
+
 function TrendBadge({ trend }: { trend: number | null }) {
   if (trend == null || trend === 0) {
     return <span className="text-muted text-xs w-10 text-center">—</span>;
@@ -83,11 +85,11 @@ export default async function PowerRankingsPage() {
           <span className="hidden sm:block w-40">Breakdown</span>
           <span className="w-16 text-right">Score</span>
         </div>
-        {rankings.map((r) => {
+        {rankings.map((r, i) => {
           const team = teamFor(r.espn_team_id);
           const injured = r.injured_count ?? 0;
           return (
-            <div key={r.id} className="p-4 flex items-center gap-4 card-hover">
+            <div key={r.id} className={`p-4 flex items-center gap-4 card-hover ${MEDAL_ROW_CLASS[i] ?? ""}`}>
               <span className="text-xl font-semibold text-accent w-7 text-center tabular-nums">
                 {r.power_rank}
               </span>

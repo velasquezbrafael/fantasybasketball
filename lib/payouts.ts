@@ -113,6 +113,32 @@ export function computeWeeklyWinners(matchups: MatchupRow[]): WeeklyWinner[] {
   return winners.sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
 }
 
+export interface WeeklyWinnerTotal {
+  espnTeamId: number;
+  weeksWon: number;
+  totalWinnings: number;
+}
+
+/**
+ * Rolls the season's weekly winners up into a per-team leaderboard — how
+ * many weeks each team has taken, and what that's worth at $5/week. A tie
+ * counts for every team that shared it (each still gets the $5).
+ */
+export function computeWeeklyWinnerTotals(
+  winners: WeeklyWinner[],
+  perWeek = 5
+): WeeklyWinnerTotal[] {
+  const counts = new Map<number, number>();
+  for (const w of winners) {
+    for (const id of w.teamEspnIds) {
+      counts.set(id, (counts.get(id) ?? 0) + 1);
+    }
+  }
+  return Array.from(counts.entries())
+    .map(([espnTeamId, weeksWon]) => ({ espnTeamId, weeksWon, totalWinnings: weeksWon * perWeek }))
+    .sort((a, b) => b.weeksWon - a.weeksWon);
+}
+
 export interface PotStanding {
   place: "1st" | "2nd" | "3rd" | "Last";
   team: TeamRow;

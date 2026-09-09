@@ -8,6 +8,7 @@ import {
   getTransactions,
 } from "@/lib/data";
 import { computeWeeklyWinners } from "@/lib/payouts";
+import { buildLeagueHeadlines } from "@/lib/espn/news";
 import { matchupSideRecord, rankTrend } from "@/lib/format";
 import { leagueRules } from "@/lib/leagueConfig";
 import EmptyState from "@/components/EmptyState";
@@ -74,6 +75,7 @@ export default async function DashboardPage() {
 
   const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
   const seasonNotStarted = allMatchups.length === 0;
+  const newsHeadlines = buildLeagueHeadlines(transactions, teams);
 
   return (
     <div className="space-y-8">
@@ -252,31 +254,25 @@ export default async function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium text-muted uppercase tracking-wide">
-            Recent moves
+            League News
           </h2>
-          <Link href="/transactions" className="text-sm text-accent hover:underline">
+          <Link href="/league-news" className="text-sm text-accent hover:underline">
             View all →
           </Link>
         </div>
         <div className="card divide-y divide-border">
-          {transactions.map((t) => (
-            <div key={t.id} className="p-4 text-sm flex items-center justify-between gap-4">
-              <div>
-                <span className="text-muted">{t.type}</span>
-                {" — "}
-                {(t.items ?? [])
-                  .map((i: { playerName?: string }) => i.playerName)
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </div>
+          {newsHeadlines.slice(0, 5).map((n) => (
+            <div key={n.id} className="p-4 text-sm flex items-center gap-3">
+              <TeamLogo logo={n.teamLogo} name={n.teamName ?? "League"} size={24} />
+              <span className="flex-1">{n.headline}</span>
               <span className="text-muted text-xs whitespace-nowrap">
-                {t.processed_at ? new Date(t.processed_at).toLocaleDateString() : ""}
+                {new Date(n.publishedAt).toLocaleDateString()}
               </span>
             </div>
           ))}
-          {transactions.length === 0 && (
+          {newsHeadlines.length === 0 && (
             <div className="p-4">
-              <EmptyState title="No transactions synced yet" detail="" />
+              <EmptyState title="No moves synced yet" detail="" />
             </div>
           )}
         </div>
