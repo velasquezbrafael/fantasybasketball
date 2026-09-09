@@ -1,10 +1,6 @@
 import type { EspnLeagueResponse } from "./types";
 
-// ESPN migrated this API off fantasy.espn.com to a dedicated read host at
-// some point in 2026. The old host now just 302s to the fantasy homepage
-// instead of erroring, which is what makes this easy to miss — you get
-// back an HTML page instead of a clear "not found".
-const BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fba";
+const BASE = "https://fantasy.espn.com/apis/v3/games/fba";
 
 export interface EspnAuth {
   leagueId: string;
@@ -51,9 +47,7 @@ export async function fetchEspnLeague(
   const res = await fetch(url, {
     headers: {
       Cookie: `espn_s2=${creds.espnS2}; SWID=${creds.swid}`,
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-      Accept: "application/json",
+      "User-Agent": "Mozilla/5.0 (compatible; FantasyHoopsTracker/1.0)",
     },
     // ESPN data changes at most a few times a day for most of these
     // views; the sync route controls how often we actually call this.
@@ -67,19 +61,6 @@ export async function fetchEspnLeague(
         0,
         300
       )}`
-    );
-  }
-
-  // ESPN sometimes returns a 200 HTML page (e.g. if it silently redirected
-  // to the fantasy homepage) instead of an error status. Catch that here
-  // with a clear message rather than letting JSON.parse blow up cryptically.
-  const contentType = res.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `ESPN returned non-JSON content (${contentType || "unknown content-type"}) for season ${season}. ` +
-        `This usually means the league/season doesn't exist or your ESPN_SWID/ESPN_S2 cookies are stale. ` +
-        `Body preview: ${body.slice(0, 200)}`
     );
   }
 

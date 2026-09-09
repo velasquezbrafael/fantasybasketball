@@ -1,6 +1,6 @@
 import type { EspnAuth } from "./client";
 
-const BASE = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/fba";
+const BASE = "https://fantasy.espn.com/apis/v3/games/fba";
 
 /**
  * ESPN's transaction payloads only include numeric playerIds. To show
@@ -23,8 +23,7 @@ export async function resolvePlayerNames(
     {
       headers: {
         Cookie: `espn_s2=${auth.espnS2}; SWID=${auth.swid}`,
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (compatible; FantasyHoopsTracker/1.0)",
         "x-fantasy-filter": JSON.stringify({
           players: { filterIds: { value: uniqueIds } },
         }),
