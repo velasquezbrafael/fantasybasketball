@@ -7,6 +7,16 @@ export const leagueRules = {
   teamCount: 16,
   totalPot: 400,
 
+  // Playoff bracket shape — not derivable from ESPN's schedule data before
+  // it happens (the play-in pairings depend on final regular-season seed),
+  // so this is entered by hand same as the payout structure below. Update
+  // this if the league's playoff format ever changes.
+  playoffFormat: {
+    autoByeCount: 6, // seeds 1-6 clinch the 8-team bracket outright
+    playInFieldSize: 4, // seeds 7-10 fight for the remaining bracket spots
+    playInAdvanceCount: 2, // ...and only 2 of those 4 make it
+  },
+
   championsPot: {
     label: "Champions Pot",
     range: "$310–335",
