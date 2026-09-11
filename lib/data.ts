@@ -96,3 +96,62 @@ export async function getTransactions(seasonId: number, limit = 50) {
     .limit(limit);
   return data ?? [];
 }
+
+/**
+ * Every synced season's row for one franchise (grouped by espn_team_id,
+ * which ESPN keeps stable across seasons even through a rename) — the
+ * source for a team's season-by-season history. Ordered newest first.
+ */
+export async function getTeamSeasons(espnTeamId: number) {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("teams")
+    .select("*")
+    .eq("espn_team_id", espnTeamId)
+    .order("season_id", { ascending: false });
+  return data ?? [];
+}
+
+/**
+ * Every team row across every synced season — the raw material for
+ * all-time standings and for a name/logo lookup keyed by espn_team_id
+ * (see lib/teamStats.ts). Ordered season_id desc so "first row per team"
+ * is always that team's most recent name.
+ */
+export async function getAllTeamSeasonRows() {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("teams")
+    .select("espn_team_id, name, abbrev, logo, wins, losses, ties, win_pct, final_rank, season_id")
+    .order("season_id", { ascending: false });
+  return data ?? [];
+}
+
+/**
+ * Every decided matchup a team has ever been part of, across every
+ * synced season — the source for a career head-to-head breakdown.
+ */
+export async function getTeamMatchups(espnTeamId: number) {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("matchups")
+    .select("*")
+    .or(`home_team_id.eq.${espnTeamId},away_team_id.eq.${espnTeamId}`)
+    .order("season_id", { ascending: false });
+  return data ?? [];
+}
+
+/**
+ * A team's power-rank/power-score across every synced snapshot of one
+ * season — the source for the trend sparkline on its team page.
+ */
+export async function getPowerRankTrend(seasonId: number, espnTeamId: number) {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("standings_snapshots")
+    .select("matchup_period_id, power_rank, power_score, captured_at")
+    .eq("season_id", seasonId)
+    .eq("espn_team_id", espnTeamId)
+    .order("captured_at", { ascending: true });
+  return data ?? [];
+}

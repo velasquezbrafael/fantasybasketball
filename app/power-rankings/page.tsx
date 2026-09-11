@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getLatestPowerRankings, getTeams } from "@/lib/data";
 import { rankTrend } from "@/lib/format";
@@ -94,33 +95,35 @@ export default async function PowerRankingsPage() {
                 {r.power_rank}
               </span>
               <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
-              <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
-              <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">
-                  {team?.name ?? `Team ${r.espn_team_id}`}
-                  {team?.abbrev && (
-                    <span className="text-muted text-xs font-normal ml-1.5">{team.abbrev}</span>
-                  )}
-                </p>
-                <p className="text-muted text-xs mt-0.5">
-                  {r.wins}-{r.losses}
-                  {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
-                  {injured > 0 && (
-                    <span className="text-danger">
-                      {" "}
-                      · {injured} player{injured > 1 ? "s" : ""} out/hurt
-                    </span>
-                  )}
-                </p>
-                <div className="sm:hidden mt-2">
-                  <ContributionBar
-                    record={r.contribution_record ?? 0}
-                    diff={r.contribution_diff ?? 0}
-                    form={r.contribution_form ?? 0}
-                    roster={r.contribution_roster ?? 0}
-                  />
+              <Link href={`/teams/${r.espn_team_id}`} className="flex items-center gap-4 flex-1 min-w-0 hover:opacity-90 transition-opacity">
+                <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">
+                    {team?.name ?? `Team ${r.espn_team_id}`}
+                    {team?.abbrev && (
+                      <span className="text-muted text-xs font-normal ml-1.5">{team.abbrev}</span>
+                    )}
+                  </p>
+                  <p className="text-muted text-xs mt-0.5">
+                    {r.wins}-{r.losses}
+                    {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
+                    {injured > 0 && (
+                      <span className="text-danger">
+                        {" "}
+                        · {injured} player{injured > 1 ? "s" : ""} out/hurt
+                      </span>
+                    )}
+                  </p>
+                  <div className="sm:hidden mt-2">
+                    <ContributionBar
+                      record={r.contribution_record ?? 0}
+                      diff={r.contribution_diff ?? 0}
+                      form={r.contribution_form ?? 0}
+                      roster={r.contribution_roster ?? 0}
+                    />
+                  </div>
                 </div>
-              </div>
+              </Link>
               <div className="hidden sm:block w-40">
                 <ContributionBar
                   record={r.contribution_record ?? 0}

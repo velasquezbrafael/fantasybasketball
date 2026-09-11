@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getMatchups, getTeams } from "@/lib/data";
 import { computeWeeklyWinnerTotals, computeWeeklyWinners } from "@/lib/payouts";
@@ -47,13 +48,15 @@ export default async function WeeklyWinnersPage() {
                   <span className="text-lg font-semibold text-accent w-6 text-center tabular-nums">
                     {i + 1}
                   </span>
-                  <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={36} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{team?.name ?? `Team ${t.espnTeamId}`}</p>
-                    <p className="text-muted text-xs">
-                      {t.weeksWon} week{t.weeksWon === 1 ? "" : "s"} won
-                    </p>
-                  </div>
+                  <Link href={`/teams/${t.espnTeamId}`} className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-90 transition-opacity">
+                    <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={36} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{team?.name ?? `Team ${t.espnTeamId}`}</p>
+                      <p className="text-muted text-xs">
+                        {t.weeksWon} week{t.weeksWon === 1 ? "" : "s"} won
+                      </p>
+                    </div>
+                  </Link>
                   <p className="font-semibold tabular-nums text-accent">${t.totalWinnings}</p>
                 </div>
               );
@@ -70,7 +73,7 @@ export default async function WeeklyWinnersPage() {
           {winners.map((w) => (
             <div key={w.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
               <span className="text-muted w-16 shrink-0">Week {w.matchupPeriodId}</span>
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Link href={`/teams/${w.teamEspnIds[0]}`} className="flex items-center gap-2 flex-1 min-w-0 hover:text-accent transition-colors">
                 {w.teamEspnIds.slice(0, 1).map((id) => (
                   <TeamLogo key={id} logo={teamFor(id)?.logo} name={teamFor(id)?.name ?? "Team"} size={26} />
                 ))}
@@ -78,7 +81,7 @@ export default async function WeeklyWinnersPage() {
                   {w.teamEspnIds.map((id) => teamFor(id)?.name ?? `Team ${id}`).join(" & ")}
                   {w.teamEspnIds.length > 1 && <span className="text-muted"> (tied)</span>}
                 </span>
-              </div>
+              </Link>
               <span className="tabular-nums font-semibold shrink-0">{w.record}</span>
               <span className="tabular-nums text-accent font-medium shrink-0 w-10 text-right">
                 ${leagueRules.specialWinningsPot.weekWinner.perWeek}

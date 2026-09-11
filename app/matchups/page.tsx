@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getMatchups, getTeams } from "@/lib/data";
 import { matchupSideRecord, prettyPlayoffTier } from "@/lib/format";
@@ -40,7 +41,10 @@ export default async function MatchupsPage() {
     const away = nameFor(m.away_team_id);
     return (
       <div className="card card-hover p-4 flex items-center justify-between">
-        <div className={`flex items-center gap-3 ${homeWon ? "text-foreground" : "text-muted"}`}>
+        <Link
+          href={`/teams/${m.home_team_id}`}
+          className={`flex items-center gap-3 hover:opacity-90 transition-opacity ${homeWon ? "text-foreground" : "text-muted"}`}
+        >
           <TeamLogo logo={home?.logo} name={home?.name ?? `Team ${m.home_team_id}`} size={34} />
           <div>
             <p className="font-medium">
@@ -51,19 +55,30 @@ export default async function MatchupsPage() {
               {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
             </p>
           </div>
-        </div>
+        </Link>
         <span className="text-muted text-xs px-2 font-display tracking-widest">VS</span>
-        <div className={`flex items-center gap-3 flex-row-reverse text-right ${awayWon ? "text-foreground" : "text-muted"}`}>
-          <TeamLogo logo={away?.logo} name={away ? away.name : "Bye"} size={34} />
-          <div>
-            <p className="font-medium">{away ? away.name : "Bye"}</p>
-            <p className="text-xl font-semibold tabular-nums">
-              {m.away_team_id
-                ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
-                : "—"}
-            </p>
+        {m.away_team_id ? (
+          <Link
+            href={`/teams/${m.away_team_id}`}
+            className={`flex items-center gap-3 flex-row-reverse text-right hover:opacity-90 transition-opacity ${awayWon ? "text-foreground" : "text-muted"}`}
+          >
+            <TeamLogo logo={away?.logo} name={away ? away.name : "Bye"} size={34} />
+            <div>
+              <p className="font-medium">{away ? away.name : "Bye"}</p>
+              <p className="text-xl font-semibold tabular-nums">
+                {matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)}
+              </p>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3 flex-row-reverse text-right text-muted">
+            <TeamLogo logo={null} name="Bye" size={34} />
+            <div>
+              <p className="font-medium">Bye</p>
+              <p className="text-xl font-semibold tabular-nums">—</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }

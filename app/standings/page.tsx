@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getTeams } from "@/lib/data";
 import EmptyState from "@/components/EmptyState";
@@ -51,13 +52,13 @@ export default async function StandingsPage() {
               >
                 <td className="px-4 py-3 text-muted">{i + 1}</td>
                 <td className="px-4 py-3 font-medium">
-                  <div className="flex items-center gap-2.5">
+                  <Link href={`/teams/${t.espn_team_id}`} className="flex items-center gap-2.5 hover:text-accent transition-colors">
                     <TeamLogo logo={t.logo} name={t.name} size={26} />
                     <span>
                       {t.name}
                       {t.abbrev && <span className="text-muted text-xs font-normal ml-1.5">{t.abbrev}</span>}
                     </span>
-                  </div>
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {t.wins}-{t.losses}

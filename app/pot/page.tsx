@@ -69,7 +69,7 @@ export default async function PotPage() {
                   </p>
                   <span className="text-lg leading-none">{MEDAL_ICON[s.place]}</span>
                 </div>
-                <div className="flex items-center gap-2.5 mt-2.5">
+                <Link href={`/teams/${s.team.espn_team_id}`} className="flex items-center gap-2.5 mt-2.5 hover:opacity-90 transition-opacity">
                   <TeamLogo logo={s.team.logo} name={s.team.name} size={32} />
                   <p className="font-medium leading-tight">
                     {s.team.name}
@@ -77,7 +77,7 @@ export default async function PotPage() {
                       <span className="text-muted text-xs font-normal block mt-0.5">{s.team.abbrev}</span>
                     )}
                   </p>
-                </div>
+                </Link>
                 <p className="text-muted text-sm mt-2">
                   {s.team.wins}-{s.team.losses}
                   {s.team.ties ? `-${s.team.ties}` : ""}
@@ -111,7 +111,7 @@ export default async function PotPage() {
           {weeklyWinners.slice(0, 5).map((w) => (
             <div key={w.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
               <span className="text-muted w-16 shrink-0">Week {w.matchupPeriodId}</span>
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Link href={`/teams/${w.teamEspnIds[0]}`} className="flex items-center gap-2 flex-1 min-w-0 hover:text-accent transition-colors">
                 {w.teamEspnIds.slice(0, 1).map((id) => (
                   <TeamLogo key={id} logo={teamFor(id)?.logo} name={nameFor(id)} size={24} />
                 ))}
@@ -119,7 +119,7 @@ export default async function PotPage() {
                   {w.teamEspnIds.map(nameFor).join(" & ")}
                   {w.teamEspnIds.length > 1 && <span className="text-muted"> (tied)</span>}
                 </span>
-              </div>
+              </Link>
               <span className="tabular-nums font-semibold shrink-0">{w.record}</span>
             </div>
           ))}

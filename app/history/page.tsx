@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getAllSeasons, getTeams } from "@/lib/data";
 import EmptyState from "@/components/EmptyState";
@@ -28,7 +29,12 @@ export default async function HistoryPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-4xl tracking-wide text-gradient">League History</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="font-display text-4xl tracking-wide text-gradient">League History</h1>
+          <Link href="/records" className="text-sm text-accent hover:underline shrink-0">
+            All-time records →
+          </Link>
+        </div>
         <p className="text-muted text-sm mt-1">
           Add past seasons via <code className="text-foreground">ESPN_HISTORICAL_SEASONS</code>{" "}
           and run a full sync — see README.md.
@@ -47,12 +53,12 @@ export default async function HistoryPage() {
           <ol className="text-sm space-y-1">
             {teams.map((t, i) => (
               <li key={t.id} className="flex items-center gap-3 justify-between border-t border-border py-1.5">
-                <span className="flex items-center gap-2 min-w-0">
+                <Link href={`/teams/${t.espn_team_id}`} className="flex items-center gap-2 min-w-0 hover:text-accent transition-colors">
                   <span className="text-muted w-5 shrink-0">{i + 1}.</span>
                   <TeamLogo logo={t.logo} name={t.name} size={22} />
                   {i === 0 && <span className="shrink-0">🏆</span>}
                   <span className="truncate">{t.name}</span>
-                </span>
+                </Link>
                 <span className="text-muted tabular-nums shrink-0">
                   {t.wins}-{t.losses}
                   {t.ties ? `-${t.ties}` : ""}

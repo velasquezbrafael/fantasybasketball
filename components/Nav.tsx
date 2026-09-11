@@ -12,6 +12,7 @@ const links = [
   { href: "/pot", label: "The Pot" },
   { href: "/league-news", label: "League News" },
   { href: "/history", label: "History" },
+  { href: "/records", label: "Records" },
 ];
 
 function BallMark() {

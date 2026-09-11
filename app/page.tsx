@@ -139,7 +139,10 @@ export default async function DashboardPage() {
         <>
           {latestWeeklyWinner && (
             <div className="card card-hover glow-accent p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <Link
+                href={`/teams/${latestWeeklyWinner.teamEspnIds[0]}`}
+                className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+              >
                 <TeamLogo
                   logo={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.logo}
                   name={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.name ?? "Team"}
@@ -158,7 +161,7 @@ export default async function DashboardPage() {
                     )}
                   </p>
                 </div>
-              </div>
+              </Link>
               <p className="text-2xl font-semibold tabular-nums text-accent">
                 {latestWeeklyWinner.record}
               </p>
@@ -187,22 +190,27 @@ export default async function DashboardPage() {
                       {r.power_rank}
                     </span>
                     <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
-                    <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {team?.name ?? `Team ${r.espn_team_id}`}
-                        {team?.abbrev && (
-                          <span className="text-muted text-xs font-normal ml-1.5">{team.abbrev}</span>
-                        )}
-                      </p>
-                      <p className="text-muted text-xs mt-0.5">
-                        {r.wins}-{r.losses}
-                        {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
-                        {r.injured_count ? (
-                          <span className="text-danger"> · {r.injured_count} banged up</span>
-                        ) : null}
-                      </p>
-                    </div>
+                    <Link
+                      href={`/teams/${r.espn_team_id}`}
+                      className="flex-1 flex items-center gap-4 min-w-0 hover:opacity-90 transition-opacity"
+                    >
+                      <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {team?.name ?? `Team ${r.espn_team_id}`}
+                          {team?.abbrev && (
+                            <span className="text-muted text-xs font-normal ml-1.5">{team.abbrev}</span>
+                          )}
+                        </p>
+                        <p className="text-muted text-xs mt-0.5">
+                          {r.wins}-{r.losses}
+                          {r.ties ? `-${r.ties}` : ""} · roster {Math.round((r.roster_strength ?? 0) * 100)}%
+                          {r.injured_count ? (
+                            <span className="text-danger"> · {r.injured_count} banged up</span>
+                          ) : null}
+                        </p>
+                      </div>
+                    </Link>
                     <p className="font-semibold tabular-nums">{Number(r.power_score).toFixed(3)}</p>
                   </div>
                 );
@@ -221,7 +229,7 @@ export default async function DashboardPage() {
                 const away = m.away_team_id ? teamFor(teams, m.away_team_id) : null;
                 return (
                   <div key={m.id} className="card card-hover p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <Link href={`/teams/${m.home_team_id}`} className="flex items-center gap-3 hover:opacity-90 transition-opacity">
                       <TeamLogo logo={home?.logo} name={home?.name ?? "Team"} size={36} />
                       <div>
                         <p className="font-medium">{home?.name ?? `Team ${m.home_team_id}`}</p>
@@ -229,19 +237,30 @@ export default async function DashboardPage() {
                           {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                     <span className="text-muted text-xs px-2 font-display tracking-widest">VS</span>
-                    <div className="flex items-center gap-3 flex-row-reverse text-right">
-                      <TeamLogo logo={away?.logo} name={away?.name ?? "Bye"} size={36} />
-                      <div>
-                        <p className="font-medium">{away ? away.name : "Bye"}</p>
-                        <p className="text-2xl font-semibold tabular-nums">
-                          {m.away_team_id
-                            ? matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)
-                            : "—"}
-                        </p>
+                    {away ? (
+                      <Link
+                        href={`/teams/${m.away_team_id}`}
+                        className="flex items-center gap-3 flex-row-reverse text-right hover:opacity-90 transition-opacity"
+                      >
+                        <TeamLogo logo={away.logo} name={away.name} size={36} />
+                        <div>
+                          <p className="font-medium">{away.name}</p>
+                          <p className="text-2xl font-semibold tabular-nums">
+                            {matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)}
+                          </p>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 flex-row-reverse text-right">
+                        <TeamLogo logo={null} name="Bye" size={36} />
+                        <div>
+                          <p className="font-medium">Bye</p>
+                          <p className="text-2xl font-semibold tabular-nums">—</p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
