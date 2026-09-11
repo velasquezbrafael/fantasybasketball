@@ -80,7 +80,7 @@ export default async function PowerRankingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-4xl tracking-wide text-gradient">Power Rankings</h1>
-        <p className="text-muted text-sm mt-1 max-w-2xl">
+        <p className="text-muted text-sm mt-1">
           Record, category differential, recent form, and injury-adjusted roster talent — not just
           who&rsquo;s hot this week.
         </p>

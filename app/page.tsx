@@ -22,6 +22,75 @@ function teamFor(teams: TeamRow[], espnTeamId: number) {
   return teams.find((t) => t.espn_team_id === espnTeamId);
 }
 
+type HeroProps = {
+  season: NonNullable<Awaited<ReturnType<typeof getCurrentSeason>>>;
+  teams: TeamRow[];
+  currentPeriod: number;
+  // The visible hero is `fixed` — not `sticky` — so it truly never moves
+  // or scrolls, regardless of browser quirks. A second, invisible copy
+  // renders in normal document flow purely to reserve its height so the
+  // rest of the page doesn't sit underneath it. That copy skips the
+  // interactive links (plain spans instead) so it can't create duplicate,
+  // invisible tab stops.
+  interactive: boolean;
+};
+
+function DashboardHero({ season, teams, currentPeriod, interactive }: HeroProps) {
+  const actionClass =
+    "px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors";
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
+      <div className="court-decoration" />
+      <div className="relative flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-1">
+            {season.id - 1}-{String(season.id).slice(2)} Season
+          </p>
+          <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
+            {season.league_name ?? "Your League"}
+          </h1>
+        </div>
+        <div className="flex gap-2 text-sm">
+          {interactive ? (
+            <Link href="/pot" className={actionClass}>
+              The Pot →
+            </Link>
+          ) : (
+            <span className={actionClass}>The Pot →</span>
+          )}
+          {interactive ? (
+            <Link href="/standings" className={actionClass}>
+              Full standings →
+            </Link>
+          ) : (
+            <span className={actionClass}>Full standings →</span>
+          )}
+        </div>
+      </div>
+      <div className="relative flex flex-wrap gap-2 mt-6">
+        <span className="stat-chip">
+          <strong>{teams.length}</strong> teams
+        </span>
+        <span className="stat-chip">
+          {currentPeriod > 0 ? (
+            <>
+              Week <strong>{currentPeriod}</strong>
+            </>
+          ) : (
+            "Preseason"
+          )}
+        </span>
+        <span className="stat-chip">
+          Pot <strong>${leagueRules.totalPot}</strong>
+        </span>
+        <span className="stat-chip">
+          Buy-in <strong>${leagueRules.buyIn}</strong>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function TrendBadge({ trend }: { trend: number | null }) {
   if (trend == null || trend === 0) {
     return <span className="text-muted text-xs w-8 text-center">—</span>;
@@ -91,60 +160,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* The sticky positioning lives on this outer div, kept free of any
-          filter/backdrop-blur. Safari has a long-standing bug where a
-          `position: sticky` element that also carries `backdrop-filter`
-          stops repainting while pinned — the content behind it visibly
-          "freezes" mid-scroll instead of blurring live. Putting the
-          background/blur on a separate, non-sticky inner div avoids it
-          entirely while looking identical. */}
-      <div className="sticky top-[61px] z-[5]">
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
-          <div className="court-decoration" />
-          <div className="relative flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-1">
-                {season.id - 1}-{String(season.id).slice(2)} Season
-              </p>
-              <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
-                {season.league_name ?? "Your League"}
-              </h1>
-            </div>
-            <div className="flex gap-2 text-sm">
-              <Link
-                href="/pot"
-                className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
-              >
-                The Pot →
-              </Link>
-              <Link
-                href="/standings"
-                className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
-              >
-                Full standings →
-              </Link>
-            </div>
-          </div>
-          <div className="relative flex flex-wrap gap-2 mt-6">
-            <span className="stat-chip">
-              <strong>{teams.length}</strong> teams
-            </span>
-            <span className="stat-chip">
-              {currentPeriod > 0 ? (
-                <>
-                  Week <strong>{currentPeriod}</strong>
-                </>
-              ) : (
-                "Preseason"
-              )}
-            </span>
-            <span className="stat-chip">
-              Pot <strong>${leagueRules.totalPot}</strong>
-            </span>
-            <span className="stat-chip">
-              Buy-in <strong>${leagueRules.buyIn}</strong>
-            </span>
-          </div>
+      {/* Truly `fixed` to the viewport — not `sticky` — so it never
+          scrolls or moves once the page loads, full stop. An invisible
+          copy directly below reserves the same height in normal document
+          flow so the real content underneath doesn't get tucked behind
+          it; `inset-x-0 px-4 sm:px-6` + the inner `max-w-6xl mx-auto`
+          mirror the main layout's own centering so it lines up exactly. */}
+      <div aria-hidden className="invisible">
+        <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} interactive={false} />
+      </div>
+      <div className="fixed top-[61px] inset-x-0 z-[5] px-4 sm:px-6 pointer-events-none">
+        <div className="max-w-6xl mx-auto pointer-events-auto">
+          <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} interactive />
         </div>
       </div>
 

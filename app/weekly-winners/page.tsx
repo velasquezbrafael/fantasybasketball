@@ -41,7 +41,7 @@ export default async function WeeklyWinnersPage() {
     <div className="space-y-10">
       <div>
         <h1 className="font-display text-4xl tracking-wide text-gradient">Weekly Winners</h1>
-        <p className="text-muted text-sm mt-1 max-w-2xl">
+        <p className="text-muted text-sm mt-1">
           Best category record in the league each week takes ${leagueRules.specialWinningsPot.weekWinner.perWeek}{" "}
           — {leagueRules.specialWinningsPot.weekWinner.weeks} weeks, $
           {leagueRules.specialWinningsPot.weekWinner.total} pot.

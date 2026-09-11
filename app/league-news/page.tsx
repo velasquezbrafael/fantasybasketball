@@ -104,7 +104,7 @@ export default async function LeagueNewsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-4xl tracking-wide text-gradient">League News</h1>
-        <p className="text-muted text-sm mt-1 max-w-2xl">
+        <p className="text-muted text-sm mt-1">
           Every trade and waiver move in the league, plus real NBA headlines about players
           someone here has rostered.
         </p>
