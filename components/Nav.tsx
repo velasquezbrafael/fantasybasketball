@@ -37,7 +37,7 @@ export default function Nav() {
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <BallMark />
           <span className="font-display text-xl tracking-wide text-gradient">
-            League Tracker
+            United Nations FBL
           </span>
         </Link>
         <nav className="flex items-center gap-1 overflow-x-auto text-sm">

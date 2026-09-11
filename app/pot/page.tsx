@@ -2,7 +2,7 @@ import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getLeagueAwards, getMatchups, getTeams } from "@/lib/data";
 import { computePotStandings, computeWeeklyWinners } from "@/lib/payouts";
-import { leagueRules } from "@/lib/leagueConfig";
+import { categoryOfWeek, leagueRules } from "@/lib/leagueConfig";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
 
@@ -111,6 +111,9 @@ export default async function PotPage() {
           {weeklyWinners.slice(0, 5).map((w) => (
             <div key={w.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
               <span className="text-muted w-16 shrink-0">Week {w.matchupPeriodId}</span>
+              <span className="hidden sm:inline-flex shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent/15 text-accent">
+                {categoryOfWeek(w.matchupPeriodId)}
+              </span>
               <Link href={`/teams/${w.teamEspnIds[0]}`} className="flex items-center gap-2 flex-1 min-w-0 hover:text-accent transition-colors">
                 {w.teamEspnIds.slice(0, 1).map((id) => (
                   <TeamLogo key={id} logo={teamFor(id)?.logo} name={nameFor(id)} size={24} />

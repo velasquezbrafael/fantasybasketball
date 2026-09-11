@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "United Nations FBL — League Tracker";
+export const alt = "United Nations FBL — Power Rankings, Standings & The Pot";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -95,7 +95,7 @@ export default function Image() {
           United Nations FBL
         </div>
         <div style={{ display: "flex", fontSize: 30, color: "#8b96ac", marginTop: 14 }}>
-          League Tracker — Power Rankings, Standings &amp; The Pot
+          Power Rankings, Standings &amp; The Pot
         </div>
       </div>
     ),

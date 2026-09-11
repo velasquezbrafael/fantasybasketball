@@ -89,9 +89,6 @@ export default async function DashboardPage() {
             <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
               {season.league_name ?? "Your League"}
             </h1>
-            <p className="text-muted text-sm mt-3">
-              Last synced {season.synced_at ? new Date(season.synced_at).toLocaleString() : "never"}
-            </p>
           </div>
           <div className="flex gap-2 text-sm">
             <Link
