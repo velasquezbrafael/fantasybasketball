@@ -29,8 +29,7 @@ export default async function RecordsPage() {
       <div>
         <h1 className="font-display text-4xl tracking-wide text-gradient">All-Time Records</h1>
         <p className="text-muted text-sm mt-1">
-          Every synced season rolled up by franchise — a rename doesn&rsquo;t reset the
-          history, ESPN keeps the same team ID under the hood.
+          Every franchise&rsquo;s career record across every season played.
         </p>
       </div>
 
@@ -90,9 +89,7 @@ export default async function RecordsPage() {
         </table>
       </div>
       <p className="text-muted text-xs">
-        👑 marks the franchise(s) with the most championships. Titles come from ESPN&rsquo;s own
-        final playoff placement (<code className="text-foreground">final_rank</code>), so a
-        season only counts once its bracket is decided.
+        👑 marks the franchise(s) with the most championships.
       </p>
     </div>
   );

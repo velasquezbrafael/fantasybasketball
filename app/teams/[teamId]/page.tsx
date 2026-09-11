@@ -128,10 +128,16 @@ export default async function TeamPage({
   const latest = teamSeasons[0];
   const nameMap = buildTeamNameMap(allRows);
   const headToHead = computeHeadToHead(matchups, espnTeamId);
-  const championships = teamSeasons.filter((s) => s.final_rank === 1).length;
-  const totalWins = teamSeasons.reduce((s, r) => s + (r.wins ?? 0), 0);
-  const totalLosses = teamSeasons.reduce((s, r) => s + (r.losses ?? 0), 0);
-  const totalTies = teamSeasons.reduce((s, r) => s + (r.ties ?? 0), 0);
+  // A `teams` row exists for a season the moment it's synced — that
+  // includes an unstarted current season (0-0) and any season ESPN's own
+  // archive never recorded results for. Neither is a season "played".
+  const playedSeasons = teamSeasons.filter(
+    (s) => (s.wins ?? 0) + (s.losses ?? 0) + (s.ties ?? 0) > 0
+  );
+  const championships = playedSeasons.filter((s) => s.final_rank === 1).length;
+  const totalWins = playedSeasons.reduce((s, r) => s + (r.wins ?? 0), 0);
+  const totalLosses = playedSeasons.reduce((s, r) => s + (r.losses ?? 0), 0);
+  const totalTies = playedSeasons.reduce((s, r) => s + (r.ties ?? 0), 0);
   const totalGames = totalWins + totalLosses + totalTies;
   const careerWinPct = totalGames > 0 ? totalWins / totalGames : 0;
 
@@ -173,7 +179,7 @@ export default async function TeamPage({
           <h1 className="font-display text-4xl tracking-wide text-gradient">{latest.name}</h1>
           <p className="text-muted text-sm mt-1">
             {latest.abbrev && <span className="mr-2">{latest.abbrev}</span>}
-            {teamSeasons.length} season{teamSeasons.length === 1 ? "" : "s"} synced
+            {playedSeasons.length} season{playedSeasons.length === 1 ? "" : "s"} played
             {championships > 0 && (
               <span className="text-foreground ml-2">
                 {"🏆".repeat(Math.min(championships, 5))} {championships} title
@@ -211,24 +217,32 @@ export default async function TeamPage({
             Season by Season
           </h2>
           <div className="card divide-y divide-border">
-            {teamSeasons.map((s) => (
-              <div key={s.season_id} className="p-3 flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  {seasonLabel(s.season_id)}
-                  {s.final_rank === 1 && <span>🏆</span>}
-                </span>
-                <span className="flex items-center gap-3 tabular-nums">
-                  <span className="text-muted">
-                    {s.wins}-{s.losses}
-                    {s.ties ? `-${s.ties}` : ""}
+            {teamSeasons.map((s) => {
+              const played = (s.wins ?? 0) + (s.losses ?? 0) + (s.ties ?? 0) > 0;
+              const isCurrent = currentSeason?.id === s.season_id;
+              return (
+                <div key={s.season_id} className="p-3 flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    {seasonLabel(s.season_id)}
+                    {s.final_rank === 1 && <span>🏆</span>}
                   </span>
-                  <span className="w-12 text-right">{(s.win_pct * 100).toFixed(0)}%</span>
-                  <span className="w-10 text-right text-muted">
-                    {s.final_rank != null ? `#${s.final_rank}` : "—"}
-                  </span>
-                </span>
-              </div>
-            ))}
+                  {played ? (
+                    <span className="flex items-center gap-3 tabular-nums">
+                      <span className="text-muted">
+                        {s.wins}-{s.losses}
+                        {s.ties ? `-${s.ties}` : ""}
+                      </span>
+                      <span className="w-12 text-right">{(s.win_pct * 100).toFixed(0)}%</span>
+                      <span className="w-10 text-right text-muted">
+                        {s.final_rank != null ? `#${s.final_rank}` : "—"}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted">{isCurrent ? "Not started" : "No data"}</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
 

@@ -63,19 +63,21 @@ export default async function PowerRankingsPage() {
     getLatestPowerRankings(season.id),
   ]);
   const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
+  const seasonStarted = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-4xl tracking-wide text-gradient">Power Rankings</h1>
         <p className="text-muted text-sm mt-1 max-w-2xl">
-          A blend of four signals, not just the raw ESPN standings: category record (30%),
-          category win-loss differential (15%), form over the last 3 regular-season weeks (15%),
-          and roster talent (40%) — each rostered player&rsquo;s preseason rank blended with their
-          live ESPN ownership%, discounted for anyone currently hurt or suspended. That last piece
-          is what lets a team with hurt stars or a thin bench rank below a healthier team with a
-          similar record.
+          Record, category differential, recent form, and injury-adjusted roster talent — not just
+          who&rsquo;s hot this week.
         </p>
+        {!seasonStarted && (
+          <p className="text-muted text-xs mt-2">
+            Season hasn&rsquo;t started — every team shows #1 until there&rsquo;s a record to rank.
+          </p>
+        )}
       </div>
 
       <div className="card divide-y divide-border overflow-hidden">
@@ -90,11 +92,16 @@ export default async function PowerRankingsPage() {
           const team = teamFor(r.espn_team_id);
           const injured = r.injured_count ?? 0;
           return (
-            <div key={r.id} className={`p-4 flex items-center gap-4 card-hover ${MEDAL_ROW_CLASS[i] ?? ""}`}>
+            <div
+              key={r.id}
+              className={`p-4 flex items-center gap-4 card-hover ${
+                seasonStarted ? MEDAL_ROW_CLASS[i] ?? "" : ""
+              }`}
+            >
               <span className="text-xl font-semibold text-accent w-7 text-center tabular-nums">
-                {r.power_rank}
+                {seasonStarted ? r.power_rank : 1}
               </span>
-              <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
+              <TrendBadge trend={seasonStarted ? rankTrend(r.power_rank, r.previous_power_rank) : null} />
               <Link href={`/teams/${r.espn_team_id}`} className="flex items-center gap-4 flex-1 min-w-0 hover:opacity-90 transition-opacity">
                 <TeamLogo logo={team?.logo} name={team?.name ?? "Team"} size={32} />
                 <div className="flex-1 min-w-0">

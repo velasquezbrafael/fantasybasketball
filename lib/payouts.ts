@@ -113,6 +113,119 @@ export function computeWeeklyWinners(matchups: MatchupRow[]): WeeklyWinner[] {
   return winners.sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
 }
 
+function scorePeriod(
+  periodMatchups: MatchupRow[]
+): { teamId: number; sortKey: number; record: string }[] {
+  const usesCategoryScoring = periodMatchups.some((m) => m.home_cat_wins != null);
+  const scored: { teamId: number; sortKey: number; record: string }[] = [];
+
+  for (const m of periodMatchups) {
+    if (usesCategoryScoring) {
+      scored.push({
+        teamId: m.home_team_id,
+        sortKey: m.home_cat_wins ?? 0,
+        record: `${m.home_cat_wins ?? 0}-${m.home_cat_losses ?? 0}${
+          m.home_cat_ties ? `-${m.home_cat_ties}` : ""
+        }`,
+      });
+      if (m.away_team_id != null) {
+        scored.push({
+          teamId: m.away_team_id,
+          sortKey: m.away_cat_wins ?? 0,
+          record: `${m.away_cat_wins ?? 0}-${m.away_cat_losses ?? 0}${
+            m.away_cat_ties ? `-${m.away_cat_ties}` : ""
+          }`,
+        });
+      }
+    } else {
+      const homeScore = Number(m.home_score ?? 0);
+      scored.push({ teamId: m.home_team_id, sortKey: homeScore, record: homeScore.toFixed(0) });
+      if (m.away_team_id != null) {
+        const awayScore = Number(m.away_score ?? 0);
+        scored.push({ teamId: m.away_team_id, sortKey: awayScore, record: awayScore.toFixed(0) });
+      }
+    }
+  }
+
+  return scored;
+}
+
+export interface WeeklyWinnerRow {
+  matchupPeriodId: number;
+  status: "decided" | "live" | "not-started";
+  teamEspnIds: number[];
+  record: string;
+}
+
+/**
+ * The full week-by-week schedule laid out from week 1 through the
+ * league's regular-season week count — unlike computeWeeklyWinners
+ * (which only ever returns weeks that are fully decided, for the
+ * season leaderboard), this always returns one row per week so the UI
+ * can show "not started yet" instead of just omitting future weeks.
+ *
+ * The current in-progress week (matching `currentPeriod`, ESPN's live
+ * matchup period) gets a "live" row using the same cumulative
+ * category-win data ESPN streams in mid-week — a real-time read of
+ * who's ahead, not a final result.
+ */
+export function computeWeeklyWinnerRows(
+  matchups: MatchupRow[],
+  totalWeeks: number,
+  currentPeriod: number
+): WeeklyWinnerRow[] {
+  const regularSeason = matchups.filter((m) => !m.playoff_tier_type);
+  const byPeriod = new Map<number, MatchupRow[]>();
+  for (const m of regularSeason) {
+    const arr = byPeriod.get(m.matchup_period_id) ?? [];
+    arr.push(m);
+    byPeriod.set(m.matchup_period_id, arr);
+  }
+
+  const rows: WeeklyWinnerRow[] = [];
+
+  for (let week = 1; week <= totalWeeks; week++) {
+    const periodMatchups = byPeriod.get(week) ?? [];
+
+    if (periodMatchups.length === 0) {
+      rows.push({ matchupPeriodId: week, status: "not-started", teamEspnIds: [], record: "" });
+      continue;
+    }
+
+    const allDecided = periodMatchups.every((m) => m.winner && m.winner !== "UNDECIDED");
+    const scored = scorePeriod(periodMatchups);
+    const hasAnyScore = scored.some((s) => s.sortKey > 0);
+
+    if (allDecided && scored.length > 0) {
+      const best = Math.max(...scored.map((s) => s.sortKey));
+      const winners = scored.filter((s) => s.sortKey === best);
+      rows.push({
+        matchupPeriodId: week,
+        status: "decided",
+        teamEspnIds: winners.map((s) => s.teamId),
+        record: winners[0].record,
+      });
+      continue;
+    }
+
+    if (week === currentPeriod && hasAnyScore) {
+      const best = Math.max(...scored.map((s) => s.sortKey));
+      const leaders = scored.filter((s) => s.sortKey === best);
+      rows.push({
+        matchupPeriodId: week,
+        status: "live",
+        teamEspnIds: leaders.map((s) => s.teamId),
+        record: leaders[0]?.record ?? "",
+      });
+      continue;
+    }
+
+    rows.push({ matchupPeriodId: week, status: "not-started", teamEspnIds: [], record: "" });
+  }
+
+  return rows.sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
+}
+
 export interface WeeklyWinnerTotal {
   espnTeamId: number;
   weeksWon: number;

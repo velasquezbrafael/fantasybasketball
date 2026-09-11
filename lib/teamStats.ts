@@ -59,21 +59,31 @@ export function computeAllTimeStandings(rows: TeamSeasonRow[]): AllTimeStanding[
   }
 
   return Array.from(byTeam.entries())
-    .map(([espnTeamId, seasons]) => {
-      const totalWins = seasons.reduce((s, r) => s + (r.wins ?? 0), 0);
-      const totalLosses = seasons.reduce((s, r) => s + (r.losses ?? 0), 0);
-      const totalTies = seasons.reduce((s, r) => s + (r.ties ?? 0), 0);
+    .map(([espnTeamId, allSeasons]) => {
+      // A `teams` row exists for a season the moment it's synced — that
+      // includes the current preseason (0-0 before the first game) and
+      // any season ESPN's own archive never actually recorded results
+      // for. Neither is a season the team "played", so both are excluded
+      // from the counted/best-season stats below (they still can't drag
+      // down career win% since they contribute 0 wins and 0 losses).
+      const played = allSeasons.filter(
+        (r) => (r.wins ?? 0) + (r.losses ?? 0) + (r.ties ?? 0) > 0
+      );
+
+      const totalWins = played.reduce((s, r) => s + (r.wins ?? 0), 0);
+      const totalLosses = played.reduce((s, r) => s + (r.losses ?? 0), 0);
+      const totalTies = played.reduce((s, r) => s + (r.ties ?? 0), 0);
       const totalGames = totalWins + totalLosses + totalTies;
-      const championships = seasons.filter((r) => r.final_rank === 1).length;
-      const bestSeason = [...seasons].sort((a, b) => b.win_pct - a.win_pct)[0];
-      const latest = seasons[0];
+      const championships = played.filter((r) => r.final_rank === 1).length;
+      const bestSeason = [...played].sort((a, b) => b.win_pct - a.win_pct)[0];
+      const latest = allSeasons[0];
 
       return {
         espnTeamId,
         name: latest.name,
         abbrev: latest.abbrev,
         logo: latest.logo,
-        seasonsPlayed: seasons.length,
+        seasonsPlayed: played.length,
         championships,
         totalWins,
         totalLosses,
@@ -83,6 +93,7 @@ export function computeAllTimeStandings(rows: TeamSeasonRow[]): AllTimeStanding[
         bestSeasonId: bestSeason?.season_id ?? null,
       };
     })
+    .filter((s) => s.seasonsPlayed > 0)
     .sort(
       (a, b) => b.careerWinPct - a.careerWinPct || b.championships - a.championships
     );

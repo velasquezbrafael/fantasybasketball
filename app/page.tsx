@@ -75,6 +75,7 @@ export default async function DashboardPage() {
 
   const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
   const seasonNotStarted = allMatchups.length === 0;
+  const seasonStarted = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
   const newsHeadlines = buildLeagueHeadlines(transactions, teams);
 
   return (
@@ -184,9 +185,9 @@ export default async function DashboardPage() {
                 return (
                   <div key={r.id} className="p-4 flex items-center gap-4">
                     <span className="text-xl font-semibold text-accent w-7 tabular-nums">
-                      {r.power_rank}
+                      {seasonStarted ? r.power_rank : 1}
                     </span>
-                    <TrendBadge trend={rankTrend(r.power_rank, r.previous_power_rank)} />
+                    <TrendBadge trend={seasonStarted ? rankTrend(r.power_rank, r.previous_power_rank) : null} />
                     <Link
                       href={`/teams/${r.espn_team_id}`}
                       className="flex-1 flex items-center gap-4 min-w-0 hover:opacity-90 transition-opacity"

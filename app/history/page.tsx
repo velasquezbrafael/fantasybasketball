@@ -40,34 +40,43 @@ export default async function HistoryPage() {
         </p>
       </div>
 
-      {seasonsWithTeams.map(({ season, teams }) => (
-        <section key={season.id} className="card card-hover p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-2xl tracking-wide">
-              {season.id - 1}-{String(season.id).slice(2)}{" "}
-              {season.is_current && <span className="text-accent text-sm ml-2 font-sans">current</span>}
-            </h2>
-            <span className="text-muted text-xs">{season.league_name}</span>
-          </div>
-          <ol className="text-sm space-y-1">
-            {teams.map((t, i) => (
-              <li key={t.id} className="flex items-center gap-3 justify-between border-t border-border py-1.5">
-                <Link href={`/teams/${t.espn_team_id}`} className="flex items-center gap-2 min-w-0 hover:text-accent transition-colors">
-                  <span className="text-muted w-5 shrink-0">{i + 1}.</span>
-                  <TeamLogo logo={t.logo} name={t.name} size={22} />
-                  {i === 0 && <span className="shrink-0">🏆</span>}
-                  <span className="truncate">{t.name}</span>
-                </Link>
-                <span className="text-muted tabular-nums shrink-0">
-                  {t.wins}-{t.losses}
-                  {t.ties ? `-${t.ties}` : ""}
-                </span>
-              </li>
-            ))}
-          </ol>
-          {teams.length === 0 && <p className="text-muted text-sm">No data for this season yet.</p>}
-        </section>
-      ))}
+      {seasonsWithTeams.map(({ season, teams }) => {
+        const hasResults = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
+        const missingHistoricalData = teams.length > 0 && !hasResults && !season.is_current;
+
+        return (
+          <section key={season.id} className="card card-hover p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display text-2xl tracking-wide">
+                {season.id - 1}-{String(season.id).slice(2)}{" "}
+                {season.is_current && <span className="text-accent text-sm ml-2 font-sans">current</span>}
+              </h2>
+              <span className="text-muted text-xs">{season.league_name}</span>
+            </div>
+            {missingHistoricalData ? (
+              <p className="text-muted text-sm">No data available for this season.</p>
+            ) : (
+              <ol className="text-sm space-y-1">
+                {teams.map((t, i) => (
+                  <li key={t.id} className="flex items-center gap-3 justify-between border-t border-border py-1.5">
+                    <Link href={`/teams/${t.espn_team_id}`} className="flex items-center gap-2 min-w-0 hover:text-accent transition-colors">
+                      <span className="text-muted w-5 shrink-0">{i + 1}.</span>
+                      <TeamLogo logo={t.logo} name={t.name} size={22} />
+                      {i === 0 && hasResults && <span className="shrink-0">🏆</span>}
+                      <span className="truncate">{t.name}</span>
+                    </Link>
+                    <span className="text-muted tabular-nums shrink-0">
+                      {t.wins}-{t.losses}
+                      {t.ties ? `-${t.ties}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {teams.length === 0 && <p className="text-muted text-sm">No data for this season yet.</p>}
+          </section>
+        );
+      })}
     </div>
   );
 }
