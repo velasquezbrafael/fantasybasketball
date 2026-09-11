@@ -26,23 +26,15 @@ type HeroProps = {
   season: NonNullable<Awaited<ReturnType<typeof getCurrentSeason>>>;
   teams: TeamRow[];
   currentPeriod: number;
-  // The visible hero is `fixed` — not `sticky` — so it truly never moves
-  // or scrolls, regardless of browser quirks. A second, invisible copy
-  // renders in normal document flow purely to reserve its height so the
-  // rest of the page doesn't sit underneath it. That copy skips the
-  // interactive links (plain spans instead) so it can't create duplicate,
-  // invisible tab stops.
-  interactive: boolean;
 };
 
-function DashboardHero({ season, teams, currentPeriod, interactive }: HeroProps) {
+function DashboardHero({ season, teams, currentPeriod }: HeroProps) {
   const actionClass =
     "px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors";
   // Fully opaque — no translucency/backdrop-blur. Those let the page's
   // scrolling content ghost through faintly, which is what read as the
-  // hero "freezing and following the scroll": a smeared afterimage of
-  // text moving underneath it as you scrolled. A solid background has
-  // nothing to bleed through.
+  // hero "freezing" — a smeared afterimage of text moving underneath it
+  // as you scrolled. A solid background has nothing to bleed through.
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-lg p-6 sm:p-8">
       <div className="court-decoration" />
@@ -56,20 +48,12 @@ function DashboardHero({ season, teams, currentPeriod, interactive }: HeroProps)
           </h1>
         </div>
         <div className="flex gap-2 text-sm">
-          {interactive ? (
-            <Link href="/pot" className={actionClass}>
-              The Pot →
-            </Link>
-          ) : (
-            <span className={actionClass}>The Pot →</span>
-          )}
-          {interactive ? (
-            <Link href="/standings" className={actionClass}>
-              Full standings →
-            </Link>
-          ) : (
-            <span className={actionClass}>Full standings →</span>
-          )}
+          <Link href="/pot" className={actionClass}>
+            The Pot →
+          </Link>
+          <Link href="/standings" className={actionClass}>
+            Full standings →
+          </Link>
         </div>
       </div>
       <div className="relative flex flex-wrap gap-2 mt-6">
@@ -165,19 +149,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Truly `fixed` to the viewport — not `sticky` — so it never
-          scrolls or moves once the page loads, full stop. An invisible
-          copy directly below reserves the same height in normal document
-          flow so the real content underneath doesn't get tucked behind
-          it; `inset-x-0 px-4 sm:px-6` + the inner `max-w-6xl mx-auto`
-          mirror the main layout's own centering so it lines up exactly. */}
-      <div aria-hidden className="invisible">
-        <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} interactive={false} />
-      </div>
-      <div className="fixed top-[61px] inset-x-0 z-[5] px-4 sm:px-6 pointer-events-none">
-        <div className="max-w-6xl mx-auto pointer-events-auto">
-          <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} interactive />
-        </div>
+      {/* `sticky`, not `fixed`: it stays pinned under the nav while you
+          scroll through the page, then unpins and scrolls away naturally
+          once you reach the end of the page's content — instead of
+          hovering over the screen forever, covering whatever's left, even
+          after there's nothing more below it. (An earlier pass tried
+          `fixed` + backdrop-blur to fight a "ghosting" artifact where
+          scrolling content showed through — but that was caused by the
+          translucent background, not by `sticky` itself. Now that the
+          background is fully opaque there's nothing left to blur or leak
+          through, so plain `sticky` works cleanly.) */}
+      <div className="sticky top-[61px] z-[5]">
+        <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} />
       </div>
 
       {seasonNotStarted ? (
