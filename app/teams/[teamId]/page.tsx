@@ -3,6 +3,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   getAllTeamSeasonRows,
   getCurrentSeason,
+  getLatestPowerRankings,
   getPowerRankTrend,
   getTeamMatchups,
   getTeamSeasons,
@@ -145,10 +146,12 @@ export default async function TeamPage({
     ? teamSeasons.find((s) => s.season_id === currentSeason.id) ?? null
     : null;
 
-  const [trend, roster] = await Promise.all([
+  const [trend, roster, powerRankings] = await Promise.all([
     currentSeason ? getPowerRankTrend(currentSeason.id, espnTeamId) : Promise.resolve([]),
     currentSeason ? fetchTeamRoster(currentSeason.id, espnTeamId) : Promise.resolve(null),
+    currentSeason ? getLatestPowerRankings(currentSeason.id) : Promise.resolve([]),
   ]);
+  const latestRanking = powerRankings.find((r) => r.espn_team_id === espnTeamId) ?? null;
 
   const starters = (roster ?? [])
     .filter((e) => e.lineupSlotId < 12)
@@ -211,7 +214,7 @@ export default async function TeamPage({
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <section>
           <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
             Season by Season
@@ -284,13 +287,96 @@ export default async function TeamPage({
       </div>
 
       {currentSeason && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           <section>
             <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
               Power Rank Trend — {seasonLabel(currentSeason.id)}
             </h2>
             <div className="card p-4">
               <PowerRankSparkline points={trend} />
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+              Power Ranking Breakdown
+            </h2>
+            <div className="card p-4">
+              {latestRanking ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-semibold tabular-nums">
+                      #{latestRanking.power_rank}
+                    </span>
+                    <span className="text-muted text-xs">
+                      Score <span className="text-foreground font-medium tabular-nums">
+                        {Number(latestRanking.power_score).toFixed(3)}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex h-2 w-full rounded-full overflow-hidden bg-surface-2">
+                    <div
+                      className="bg-accent"
+                      style={{ width: `${Math.max(0, latestRanking.contribution_record ?? 0) * 100}%` }}
+                    />
+                    <div
+                      className="bg-accent-2"
+                      style={{ width: `${Math.max(0, latestRanking.contribution_diff ?? 0) * 100}%` }}
+                    />
+                    <div
+                      className="bg-amber-400"
+                      style={{ width: `${Math.max(0, latestRanking.contribution_form ?? 0) * 100}%` }}
+                    />
+                    <div
+                      className="bg-violet-400"
+                      style={{ width: `${Math.max(0, latestRanking.contribution_roster ?? 0) * 100}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent shrink-0" />
+                      Record
+                      <span className="ml-auto tabular-nums text-muted">
+                        {((latestRanking.contribution_record ?? 0) * 100).toFixed(1)} / 30
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-accent-2 shrink-0" />
+                      Differential
+                      <span className="ml-auto tabular-nums text-muted">
+                        {((latestRanking.contribution_diff ?? 0) * 100).toFixed(1)} / 15
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      Recent form
+                      <span className="ml-auto tabular-nums text-muted">
+                        {((latestRanking.contribution_form ?? 0) * 100).toFixed(1)} / 15
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-violet-400 shrink-0" />
+                      Roster talent
+                      <span className="ml-auto tabular-nums text-muted">
+                        {((latestRanking.contribution_roster ?? 0) * 100).toFixed(1)} / 40
+                      </span>
+                    </span>
+                  </div>
+                  <p className="text-muted text-xs pt-2 border-t border-border">
+                    {latestRanking.wins}-{latestRanking.losses}
+                    {latestRanking.ties ? `-${latestRanking.ties}` : ""} · roster{" "}
+                    {Math.round((latestRanking.roster_strength ?? 0) * 100)}%
+                    {latestRanking.injured_count ? (
+                      <span className="text-danger">
+                        {" "}
+                        · {latestRanking.injured_count} out/hurt
+                      </span>
+                    ) : null}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-muted text-sm">No power ranking data yet.</p>
+              )}
             </div>
           </section>
 

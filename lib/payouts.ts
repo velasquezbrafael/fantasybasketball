@@ -223,7 +223,9 @@ export function computeWeeklyWinnerRows(
     rows.push({ matchupPeriodId: week, status: "not-started", teamEspnIds: [], record: "" });
   }
 
-  return rows.sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
+  // Chronological, week 1 first — this is the full-season schedule view,
+  // not a "recent activity" feed.
+  return rows.sort((a, b) => a.matchupPeriodId - b.matchupPeriodId);
 }
 
 export interface WeeklyWinnerTotal {

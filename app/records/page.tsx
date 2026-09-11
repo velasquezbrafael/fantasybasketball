@@ -41,6 +41,7 @@ export default async function RecordsPage() {
               <th className="text-left px-4 py-3 font-medium">Team</th>
               <th className="text-right px-4 py-3 font-medium">Seasons</th>
               <th className="text-right px-4 py-3 font-medium">Titles</th>
+              <th className="text-right px-4 py-3 font-medium">Best Finish</th>
               <th className="text-right px-4 py-3 font-medium">Career Record</th>
               <th className="text-right px-4 py-3 font-medium">Career Win%</th>
               <th className="text-right px-4 py-3 font-medium">Best Season</th>
@@ -70,6 +71,9 @@ export default async function RecordsPage() {
                 <td className="px-4 py-3 text-right tabular-nums">
                   {s.championships > 0 ? "🏆".repeat(Math.min(s.championships, 3)) : "—"}
                   {s.championships > 3 && ` ×${s.championships}`}
+                </td>
+                <td className="px-4 py-3 text-right tabular-nums text-muted">
+                  {s.bestFinish != null ? `#${s.bestFinish}` : "—"}
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">
                   {s.totalWins}-{s.totalLosses}

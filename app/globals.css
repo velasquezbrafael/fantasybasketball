@@ -34,12 +34,50 @@
 }
 
 body {
-  background:
-    radial-gradient(1200px 500px at 15% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent),
-    radial-gradient(900px 500px at 110% 10%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent),
-    var(--background);
+  position: relative;
+  isolation: isolate;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Ambient backdrop glow, pinned to the viewport (not the document) so it
+   stays visible the whole time you scroll instead of just sitting near
+   the top of a tall page — that's what read as "static" before: on any
+   page taller than one screen, everything below the first fold was just
+   flat --background with no color at all. A slow, subtle drift keeps it
+   feeling alive without being distracting; prefers-reduced-motion turns
+   the drift off but keeps the glow itself. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10%;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1200px 600px at 15% -5%, color-mix(in srgb, var(--accent) 16%, transparent), transparent),
+    radial-gradient(900px 600px at 105% 10%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent),
+    radial-gradient(700px 500px at 45% 105%, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
+  background-repeat: no-repeat;
+  animation: ambient-drift 42s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
+}
+
+@keyframes ambient-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-2%, 2%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(2%, -1.5%, 0) scale(1);
+  }
 }
 
 .card {

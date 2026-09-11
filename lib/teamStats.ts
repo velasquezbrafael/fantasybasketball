@@ -43,6 +43,8 @@ export interface AllTimeStanding {
   careerWinPct: number;
   bestSeasonWinPct: number;
   bestSeasonId: number | null;
+  bestFinish: number | null;
+  bestFinishSeasonId: number | null;
 }
 
 /**
@@ -76,6 +78,13 @@ export function computeAllTimeStandings(rows: TeamSeasonRow[]): AllTimeStanding[
       const totalGames = totalWins + totalLosses + totalTies;
       const championships = played.filter((r) => r.final_rank === 1).length;
       const bestSeason = [...played].sort((a, b) => b.win_pct - a.win_pct)[0];
+      // Best career finish — the lowest final_rank across every season
+      // whose playoff bracket was actually decided. A season that's still
+      // in progress (final_rank null) just isn't a candidate yet.
+      const decidedSeasons = played.filter((r) => r.final_rank != null);
+      const bestFinishSeason = [...decidedSeasons].sort(
+        (a, b) => (a.final_rank ?? Infinity) - (b.final_rank ?? Infinity)
+      )[0];
       const latest = allSeasons[0];
 
       return {
@@ -91,6 +100,8 @@ export function computeAllTimeStandings(rows: TeamSeasonRow[]): AllTimeStanding[
         careerWinPct: totalGames > 0 ? totalWins / totalGames : 0,
         bestSeasonWinPct: bestSeason?.win_pct ?? 0,
         bestSeasonId: bestSeason?.season_id ?? null,
+        bestFinish: bestFinishSeason?.final_rank ?? null,
+        bestFinishSeasonId: bestFinishSeason?.season_id ?? null,
       };
     })
     .filter((s) => s.seasonsPlayed > 0)

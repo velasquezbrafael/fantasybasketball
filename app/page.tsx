@@ -76,11 +76,22 @@ export default async function DashboardPage() {
   const latestWeeklyWinner = computeWeeklyWinners(allMatchups)[0];
   const seasonNotStarted = allMatchups.length === 0;
   const seasonStarted = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
+  const nameOfTeam = (id: number) => teamFor(teams, id)?.name ?? "";
+  // Before the season starts every team displays as #1 (the underlying
+  // power_rank is a meaningless preseason tiebreak, not a real ranking),
+  // so sort by name alphabetically instead of by that number. Once real
+  // games are in, sort by power_rank and fall back to name only for a
+  // genuine tie.
+  const rankedPowerRankings = [...powerRankings].sort((a, b) =>
+    seasonStarted
+      ? a.power_rank - b.power_rank || nameOfTeam(a.espn_team_id).localeCompare(nameOfTeam(b.espn_team_id))
+      : nameOfTeam(a.espn_team_id).localeCompare(nameOfTeam(b.espn_team_id))
+  );
   const newsHeadlines = buildLeagueHeadlines(transactions, teams);
 
   return (
     <div className="space-y-8">
-      <div className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8">
+      <div className="sticky top-[61px] z-[5] overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
         <div className="court-decoration" />
         <div className="relative flex items-start justify-between flex-wrap gap-4">
           <div>
@@ -180,7 +191,7 @@ export default async function DashboardPage() {
               just who&rsquo;s hot this week.
             </p>
             <div className="card divide-y divide-border">
-              {powerRankings.slice(0, 5).map((r) => {
+              {rankedPowerRankings.slice(0, 5).map((r) => {
                 const team = teamFor(teams, r.espn_team_id);
                 return (
                   <div key={r.id} className="p-4 flex items-center gap-4">

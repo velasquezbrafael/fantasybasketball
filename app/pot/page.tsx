@@ -69,11 +69,14 @@ export default async function PotPage() {
   const seasonStarted = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
   const potStandings = seasonStarted ? computePotStandings(teams) : [];
   const currentPeriod = Math.max(0, ...powerRankings.map((r) => r.matchup_period_id ?? 0));
-  const weeklyRows = computeWeeklyWinnerRows(
+  // computeWeeklyWinnerRows returns chronological (week 1 first) — this
+  // condensed preview wants the most recently-relevant weeks up top, so
+  // flip it just for display here.
+  const weeklyRowsRecentFirst = [...computeWeeklyWinnerRows(
     matchups,
     leagueRules.specialWinningsPot.weekWinner.weeks,
     currentPeriod
-  );
+  )].sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
   const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
   const nameFor = (id: number) => teamFor(id)?.name ?? `Team ${id}`;
 
@@ -152,7 +155,7 @@ export default async function PotPage() {
           </Link>
         </div>
         <div className="card divide-y divide-border">
-          {weeklyRows.slice(0, 5).map((row) => (
+          {weeklyRowsRecentFirst.slice(0, 5).map((row) => (
             <div key={row.matchupPeriodId} className="p-4 flex items-center gap-4 text-sm card-hover">
               <span className="text-muted w-16 shrink-0">Week {row.matchupPeriodId}</span>
               <span className="hidden sm:inline-flex shrink-0 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent/15 text-accent">

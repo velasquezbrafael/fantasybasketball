@@ -58,12 +58,23 @@ export default async function PowerRankingsPage() {
   const season = await getCurrentSeason();
   if (!season) return <EmptyState title="No season synced yet" />;
 
-  const [teams, rankings] = await Promise.all([
+  const [teams, rawRankings] = await Promise.all([
     getTeams(season.id),
     getLatestPowerRankings(season.id),
   ]);
   const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
   const seasonStarted = teams.some((t) => (t.wins ?? 0) + (t.losses ?? 0) + (t.ties ?? 0) > 0);
+  const nameOf = (id: number) => teamFor(id)?.name ?? "";
+  // Before the season starts every team displays as #1 (the underlying
+  // power_rank is a meaningless preseason tiebreak, not a real ranking),
+  // so sort by name alphabetically instead of by that number. Once real
+  // games are in, sort by power_rank and fall back to name only for a
+  // genuine tie.
+  const rankings = [...rawRankings].sort((a, b) =>
+    seasonStarted
+      ? a.power_rank - b.power_rank || nameOf(a.espn_team_id).localeCompare(nameOf(b.espn_team_id))
+      : nameOf(a.espn_team_id).localeCompare(nameOf(b.espn_team_id))
+  );
 
   return (
     <div className="space-y-6">
@@ -78,6 +89,57 @@ export default async function PowerRankingsPage() {
             Season hasn&rsquo;t started — every team shows #1 until there&rsquo;s a record to rank.
           </p>
         )}
+      </div>
+
+      <div className="card p-4">
+        <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
+          How it&rsquo;s calculated
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent inline-block mt-1.5 shrink-0" />
+            <div>
+              <p className="font-medium">
+                Record <span className="text-muted font-normal">— 30%</span>
+              </p>
+              <p className="text-muted text-xs mt-0.5">Category win percentage this season.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-accent-2 inline-block mt-1.5 shrink-0" />
+            <div>
+              <p className="font-medium">
+                Differential <span className="text-muted font-normal">— 15%</span>
+              </p>
+              <p className="text-muted text-xs mt-0.5">
+                Category win-loss margin, not just win or loss.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block mt-1.5 shrink-0" />
+            <div>
+              <p className="font-medium">
+                Recent form <span className="text-muted font-normal">— 15%</span>
+              </p>
+              <p className="text-muted text-xs mt-0.5">
+                Performance over the last 3 regular-season weeks.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block mt-1.5 shrink-0" />
+            <div>
+              <p className="font-medium">
+                Roster talent <span className="text-muted font-normal">— 40%</span>
+              </p>
+              <p className="text-muted text-xs mt-0.5">
+                Each rostered player&rsquo;s preseason rank blended with live ESPN ownership%,
+                discounted for anyone currently hurt or suspended.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="card divide-y divide-border overflow-hidden">
@@ -150,21 +212,6 @@ export default async function PowerRankingsPage() {
             <EmptyState />
           </div>
         )}
-      </div>
-
-      <div className="flex items-center gap-4 text-xs text-muted flex-wrap">
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-accent inline-block" /> Record
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-accent-2 inline-block" /> Differential
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" /> Recent form
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block" /> Roster talent
-        </span>
       </div>
     </div>
   );
