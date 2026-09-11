@@ -20,8 +20,14 @@ export default async function HistoryPage() {
   const seasonsWithTeams = await Promise.all(
     seasons.map(async (s) => ({
       season: s,
+      // Same rank/win% falls back to alphabetical — same rule as Power
+      // Rankings and Standings — instead of whatever order the DB
+      // happened to return.
       teams: (await getTeams(s.id)).sort(
-        (a, b) => (a.final_rank ?? 99) - (b.final_rank ?? 99) || b.win_pct - a.win_pct
+        (a, b) =>
+          (a.final_rank ?? 99) - (b.final_rank ?? 99) ||
+          b.win_pct - a.win_pct ||
+          a.name.localeCompare(b.name)
       ),
     }))
   );

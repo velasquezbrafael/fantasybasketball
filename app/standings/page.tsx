@@ -17,7 +17,12 @@ export default async function StandingsPage() {
   if (!season) return <EmptyState title="No season synced yet" />;
 
   const teams = await getTeams(season.id);
-  const sorted = [...teams].sort((a, b) => b.win_pct - a.win_pct);
+  // Same win% (everyone at 0-0 preseason, or a genuine tie) falls back to
+  // alphabetical — same rule as Power Rankings — instead of whatever order
+  // the DB happened to return.
+  const sorted = [...teams].sort(
+    (a, b) => b.win_pct - a.win_pct || a.name.localeCompare(b.name)
+  );
   const seasonDecided = teams.some((t) => t.final_rank != null);
 
   return (

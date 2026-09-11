@@ -91,51 +91,60 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="sticky top-[61px] z-[5] overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
-        <div className="court-decoration" />
-        <div className="relative flex items-start justify-between flex-wrap gap-4">
-          <div>
-            <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-1">
-              {season.id - 1}-{String(season.id).slice(2)} Season
-            </p>
-            <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
-              {season.league_name ?? "Your League"}
-            </h1>
+      {/* The sticky positioning lives on this outer div, kept free of any
+          filter/backdrop-blur. Safari has a long-standing bug where a
+          `position: sticky` element that also carries `backdrop-filter`
+          stops repainting while pinned — the content behind it visibly
+          "freezes" mid-scroll instead of blurring live. Putting the
+          background/blur on a separate, non-sticky inner div avoids it
+          entirely while looking identical. */}
+      <div className="sticky top-[61px] z-[5]">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
+          <div className="court-decoration" />
+          <div className="relative flex items-start justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-accent text-xs font-semibold uppercase tracking-widest mb-1">
+                {season.id - 1}-{String(season.id).slice(2)} Season
+              </p>
+              <h1 className="font-display text-4xl sm:text-5xl tracking-wide text-gradient leading-none">
+                {season.league_name ?? "Your League"}
+              </h1>
+            </div>
+            <div className="flex gap-2 text-sm">
+              <Link
+                href="/pot"
+                className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
+              >
+                The Pot →
+              </Link>
+              <Link
+                href="/standings"
+                className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
+              >
+                Full standings →
+              </Link>
+            </div>
           </div>
-          <div className="flex gap-2 text-sm">
-            <Link
-              href="/pot"
-              className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
-            >
-              The Pot →
-            </Link>
-            <Link
-              href="/standings"
-              className="px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors"
-            >
-              Full standings →
-            </Link>
+          <div className="relative flex flex-wrap gap-2 mt-6">
+            <span className="stat-chip">
+              <strong>{teams.length}</strong> teams
+            </span>
+            <span className="stat-chip">
+              {currentPeriod > 0 ? (
+                <>
+                  Week <strong>{currentPeriod}</strong>
+                </>
+              ) : (
+                "Preseason"
+              )}
+            </span>
+            <span className="stat-chip">
+              Pot <strong>${leagueRules.totalPot}</strong>
+            </span>
+            <span className="stat-chip">
+              Buy-in <strong>${leagueRules.buyIn}</strong>
+            </span>
           </div>
-        </div>
-        <div className="relative flex flex-wrap gap-2 mt-6">
-          <span className="stat-chip">
-            <strong>{teams.length}</strong> teams
-          </span>
-          <span className="stat-chip">
-            {currentPeriod > 0 ? (
-              <>
-                Week <strong>{currentPeriod}</strong>
-              </>
-            ) : (
-              "Preseason"
-            )}
-          </span>
-          <span className="stat-chip">
-            Pot <strong>${leagueRules.totalPot}</strong>
-          </span>
-          <span className="stat-chip">
-            Buy-in <strong>${leagueRules.buyIn}</strong>
-          </span>
         </div>
       </div>
 

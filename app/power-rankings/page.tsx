@@ -84,11 +84,9 @@ export default async function PowerRankingsPage() {
           Record, category differential, recent form, and injury-adjusted roster talent — not just
           who&rsquo;s hot this week.
         </p>
-        {!seasonStarted && (
-          <p className="text-muted text-xs mt-2">
-            Season hasn&rsquo;t started — every team shows #1 until there&rsquo;s a record to rank.
-          </p>
-        )}
+        <p className="text-muted text-xs mt-2">
+          Click into any team to see their full ranking breakdown and head-to-head history.
+        </p>
       </div>
 
       <div className="card p-4">
