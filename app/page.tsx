@@ -42,7 +42,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold">Welcome to your league dashboard</h1>
         <EmptyState
           title="Not connected yet"
-          detail="Add your Supabase and ESPN credentials to .env.local (or your Vercel project settings), run the schema, then hit /api/sync to pull your league. Full steps are in README.md."
+          detail="Check back once this league's data has synced."
         />
       </div>
     );
@@ -54,7 +54,7 @@ export default async function DashboardPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Welcome to your league dashboard</h1>
-        <EmptyState title="No season synced yet" detail="Trigger a sync: POST /api/sync?secret=YOUR_SYNC_SECRET" />
+        <EmptyState title="No season synced yet" />
       </div>
     );
   }
@@ -141,18 +141,18 @@ export default async function DashboardPage() {
             <div className="card card-hover glow-accent p-4 flex items-center justify-between">
               <Link
                 href={`/teams/${latestWeeklyWinner.teamEspnIds[0]}`}
-                className="flex items-center gap-3 hover:opacity-90 transition-opacity"
+                className="flex items-center gap-3 min-w-0 flex-1 hover:opacity-90 transition-opacity"
               >
                 <TeamLogo
                   logo={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.logo}
                   name={teamFor(teams, latestWeeklyWinner.teamEspnIds[0])?.name ?? "Team"}
                   size={40}
                 />
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs font-semibold text-accent uppercase tracking-wide">
                     Week {latestWeeklyWinner.matchupPeriodId} winner — $5
                   </p>
-                  <p className="font-semibold mt-0.5">
+                  <p className="font-semibold mt-0.5 truncate">
                     {latestWeeklyWinner.teamEspnIds
                       .map((id) => teamFor(teams, id)?.name ?? `Team ${id}`)
                       .join(" & ")}
@@ -162,7 +162,7 @@ export default async function DashboardPage() {
                   </p>
                 </div>
               </Link>
-              <p className="text-2xl font-semibold tabular-nums text-accent">
+              <p className="text-2xl font-semibold tabular-nums text-accent shrink-0 ml-4">
                 {latestWeeklyWinner.record}
               </p>
             </div>
@@ -228,35 +228,35 @@ export default async function DashboardPage() {
                 const home = teamFor(teams, m.home_team_id);
                 const away = m.away_team_id ? teamFor(teams, m.away_team_id) : null;
                 return (
-                  <div key={m.id} className="card card-hover p-4 flex items-center justify-between">
-                    <Link href={`/teams/${m.home_team_id}`} className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+                  <div key={m.id} className="card card-hover p-4 flex items-center justify-between gap-2">
+                    <Link href={`/teams/${m.home_team_id}`} className="flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity">
                       <TeamLogo logo={home?.logo} name={home?.name ?? "Team"} size={36} />
-                      <div>
-                        <p className="font-medium">{home?.name ?? `Team ${m.home_team_id}`}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{home?.name ?? `Team ${m.home_team_id}`}</p>
                         <p className="text-2xl font-semibold tabular-nums">
                           {matchupSideRecord(m.home_cat_wins, m.home_cat_losses, m.home_cat_ties, m.home_score)}
                         </p>
                       </div>
                     </Link>
-                    <span className="text-muted text-xs px-2 font-display tracking-widest">VS</span>
+                    <span className="text-muted text-xs px-2 font-display tracking-widest shrink-0">VS</span>
                     {away ? (
                       <Link
                         href={`/teams/${m.away_team_id}`}
-                        className="flex items-center gap-3 flex-row-reverse text-right hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-3 flex-row-reverse text-right min-w-0 hover:opacity-90 transition-opacity"
                       >
                         <TeamLogo logo={away.logo} name={away.name} size={36} />
-                        <div>
-                          <p className="font-medium">{away.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{away.name}</p>
                           <p className="text-2xl font-semibold tabular-nums">
                             {matchupSideRecord(m.away_cat_wins, m.away_cat_losses, m.away_cat_ties, m.away_score)}
                           </p>
                         </div>
                       </Link>
                     ) : (
-                      <div className="flex items-center gap-3 flex-row-reverse text-right">
+                      <div className="flex items-center gap-3 flex-row-reverse text-right min-w-0">
                         <TeamLogo logo={null} name="Bye" size={36} />
-                        <div>
-                          <p className="font-medium">Bye</p>
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">Bye</p>
                           <p className="text-2xl font-semibold tabular-nums">—</p>
                         </div>
                       </div>

@@ -71,7 +71,7 @@ function NewsCard({ item }: { item: NewsItem }) {
 
 export default async function LeagueNewsPage() {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const season = await getCurrentSeason();

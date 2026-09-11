@@ -100,7 +100,7 @@ export default async function TeamPage({
   params: Promise<{ teamId: string }>;
 }) {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const { teamId: teamIdParam } = await params;
@@ -287,7 +287,7 @@ export default async function TeamPage({
             <div className="card p-4">
               {roster === null && (
                 <p className="text-muted text-sm">
-                  Live roster needs ESPN credentials configured — see README.md.
+                  Live roster isn&rsquo;t available right now.
                 </p>
               )}
               {roster !== null && roster.length === 0 && (

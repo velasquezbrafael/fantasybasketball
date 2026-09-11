@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HistoryPage() {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const seasons = await getAllSeasons();
@@ -36,8 +36,7 @@ export default async function HistoryPage() {
           </Link>
         </div>
         <p className="text-muted text-sm mt-1">
-          Add past seasons via <code className="text-foreground">ESPN_HISTORICAL_SEASONS</code>{" "}
-          and run a full sync — see README.md.
+          Every synced season, most recent first.
         </p>
       </div>
 

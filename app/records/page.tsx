@@ -15,7 +15,7 @@ function seasonLabel(seasonId: number): string {
 
 export default async function RecordsPage() {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const rows = await getAllTeamSeasonRows();

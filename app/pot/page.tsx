@@ -24,7 +24,7 @@ const MEDAL_ICON: Record<string, string> = {
 
 export default async function PotPage() {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const season = await getCurrentSeason();
@@ -69,9 +69,9 @@ export default async function PotPage() {
                   </p>
                   <span className="text-lg leading-none">{MEDAL_ICON[s.place]}</span>
                 </div>
-                <Link href={`/teams/${s.team.espn_team_id}`} className="flex items-center gap-2.5 mt-2.5 hover:opacity-90 transition-opacity">
+                <Link href={`/teams/${s.team.espn_team_id}`} className="flex items-center gap-2.5 mt-2.5 min-w-0 hover:opacity-90 transition-opacity">
                   <TeamLogo logo={s.team.logo} name={s.team.name} size={32} />
-                  <p className="font-medium leading-tight">
+                  <p className="font-medium leading-tight min-w-0 truncate">
                     {s.team.name}
                     {s.team.abbrev && (
                       <span className="text-muted text-xs font-normal block mt-0.5">{s.team.abbrev}</span>
@@ -168,10 +168,7 @@ export default async function PotPage() {
           ))}
         </div>
         <p className="text-muted text-xs mt-3">
-          These get decided at season end — update them anytime in Supabase&rsquo;s Table editor
-          (<code className="text-foreground">league_awards</code>, columns{" "}
-          <code className="text-foreground">winner_note</code> /{" "}
-          <code className="text-foreground">winner_team_espn_id</code>).
+          These get decided at season end.
         </p>
       </section>
     </div>

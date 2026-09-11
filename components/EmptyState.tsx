@@ -1,6 +1,6 @@
 export default function EmptyState({
   title = "No data yet",
-  detail = "Run the sync job to pull data from ESPN — see README.md for setup.",
+  detail = "Check back once this season's data has synced.",
 }: {
   title?: string;
   detail?: string;

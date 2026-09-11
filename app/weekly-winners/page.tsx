@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function WeeklyWinnersPage() {
   if (!isSupabaseConfigured()) {
-    return <EmptyState title="Not connected yet" detail="See README.md to configure Supabase and ESPN credentials." />;
+    return <EmptyState title="Not connected yet" detail="Check back once this league's data has synced." />;
   }
 
   const season = await getCurrentSeason();
