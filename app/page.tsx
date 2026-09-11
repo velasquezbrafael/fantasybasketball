@@ -38,8 +38,13 @@ type HeroProps = {
 function DashboardHero({ season, teams, currentPeriod, interactive }: HeroProps) {
   const actionClass =
     "px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors";
+  // Fully opaque — no translucency/backdrop-blur. Those let the page's
+  // scrolling content ghost through faintly, which is what read as the
+  // hero "freezing and following the scroll": a smeared afterimage of
+  // text moving underneath it as you scrolled. A solid background has
+  // nothing to bleed through.
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface/90 backdrop-blur-md shadow-lg p-6 sm:p-8">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-lg p-6 sm:p-8">
       <div className="court-decoration" />
       <div className="relative flex items-start justify-between flex-wrap gap-4">
         <div>

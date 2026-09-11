@@ -31,8 +31,10 @@ function BallMark() {
 export default function Nav() {
   const pathname = usePathname();
 
+  // Fully opaque — see the comment on the dashboard hero: a translucent
+  // + blurred sticky header lets scrolling content ghost through it.
   return (
-    <header className="border-b border-border bg-surface/70 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-border bg-surface sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <BallMark />
