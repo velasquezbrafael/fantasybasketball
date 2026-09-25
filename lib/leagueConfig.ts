@@ -3,9 +3,9 @@
 // season to season (buy-in amount, payout splits, award categories).
 
 export const leagueRules = {
-  buyIn: 25,
+  buyIn: 35,
   teamCount: 16,
-  totalPot: 400,
+  totalPot: 560,
 
   // Playoff bracket shape — not derivable from ESPN's schedule data before
   // it happens (the play-in pairings depend on final regular-season seed),
@@ -19,16 +19,16 @@ export const leagueRules = {
 
   championsPot: {
     label: "Champions Pot",
-    range: "$310–335",
+    range: "$450",
     payouts: [
-      { place: "1st", amount: "$160–165", extra: "+ trophy" as string | undefined },
-      { place: "2nd", amount: "$75", extra: undefined as string | undefined },
-      { place: "3rd", amount: "$40", extra: undefined as string | undefined },
+      { place: "1st", amount: "$265", extra: "+ trophy" as string | undefined },
+      { place: "2nd", amount: "$120", extra: undefined as string | undefined },
+      { place: "3rd", amount: "$65", extra: undefined as string | undefined },
     ],
     lastPlace: {
       label: "Last place (worst record)",
       detail:
-        "Punishment, or pay $25 into the pot — split $10 to 1st, $10 to 2nd, $5 to 3rd",
+        "Punishment, or pay $35 into the pot — split $14 to 1st, $14 to 2nd, $7 to 3rd",
     },
   },
 
