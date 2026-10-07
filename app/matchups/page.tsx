@@ -40,7 +40,7 @@ export default async function MatchupsPage() {
     const home = nameFor(m.home_team_id);
     const away = nameFor(m.away_team_id);
     return (
-      <div className="card card-hover p-4 flex items-center justify-between gap-2">
+      <div className="card card-hover p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <Link
           href={`/teams/${m.home_team_id}`}
           className={`flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity ${homeWon ? "text-foreground" : "text-muted"}`}
@@ -56,11 +56,11 @@ export default async function MatchupsPage() {
             </p>
           </div>
         </Link>
-        <span className="text-muted text-xs px-2 font-display tracking-widest shrink-0">VS</span>
+        <span className="text-muted text-xs sm:px-2 font-display tracking-widest shrink-0 self-center">VS</span>
         {m.away_team_id ? (
           <Link
             href={`/teams/${m.away_team_id}`}
-            className={`flex items-center gap-3 flex-row-reverse text-right min-w-0 hover:opacity-90 transition-opacity ${awayWon ? "text-foreground" : "text-muted"}`}
+            className={`flex items-center gap-3 sm:flex-row-reverse sm:text-right min-w-0 hover:opacity-90 transition-opacity ${awayWon ? "text-foreground" : "text-muted"}`}
           >
             <TeamLogo logo={away?.logo} name={away ? away.name : "Bye"} size={34} />
             <div className="min-w-0">
@@ -71,7 +71,7 @@ export default async function MatchupsPage() {
             </div>
           </Link>
         ) : (
-          <div className="flex items-center gap-3 flex-row-reverse text-right text-muted min-w-0">
+          <div className="flex items-center gap-3 sm:flex-row-reverse sm:text-right text-muted min-w-0">
             <TeamLogo logo={null} name="Bye" size={34} />
             <div className="min-w-0">
               <p className="font-medium truncate">Bye</p>

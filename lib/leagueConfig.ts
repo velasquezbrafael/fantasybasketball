@@ -71,6 +71,7 @@ export const leagueSettings = {
     type: "Salary cap (auction)",
     date: "Fri, Oct 16",
     time: "7:30 PM EDT",
+    startsAt: "2026-10-16T19:30:00-04:00", // same moment, machine-readable (for the countdown)
     cap: 200, // same for every team this year
   },
   waivers: {

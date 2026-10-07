@@ -45,21 +45,29 @@ export default async function TeamsPage() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-3xl font-semibold text-accent tabular-nums w-8">
-                      {started ? r.rank : "—"}
-                    </span>
+                    {started && (
+                      <span className="text-3xl font-semibold text-accent tabular-nums w-8">
+                        {r.rank}
+                      </span>
+                    )}
                     <div className="min-w-0">
                       <p className="font-display text-2xl tracking-wide leading-none">{r.name}</p>
                       <p className="text-muted text-xs mt-1">
                         {started
                           ? `${(r.catWinPct * 100).toFixed(1)}% category win rate`
-                          : "Standings start once games are played"}
+                          : "4 managers"}
                       </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xl font-semibold tabular-nums">{formatCatRecord(r)}</p>
-                    <p className="text-muted text-xs">cats W-L-T</p>
+                    {started ? (
+                      <>
+                        <p className="text-xl font-semibold tabular-nums">{formatCatRecord(r)}</p>
+                        <p className="text-muted text-xs">cats W-L-T</p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium text-muted">Starts Week 1</p>
+                    )}
                   </div>
                 </div>
 
@@ -76,7 +84,9 @@ export default async function TeamsPage() {
                         <span className="flex-1 min-w-0 truncate font-medium">
                           {t?.name ?? `Team ${mem.espnTeamId}`}
                         </span>
-                        <span className="tabular-nums text-muted shrink-0">{formatCatRecord(mem)}</span>
+                        {started && (
+                          <span className="tabular-nums text-muted shrink-0">{formatCatRecord(mem)}</span>
+                        )}
                       </Link>
                     );
                   })}

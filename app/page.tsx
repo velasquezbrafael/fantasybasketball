@@ -10,8 +10,9 @@ import {
 import { computeWeeklyWinners } from "@/lib/payouts";
 import { buildLeagueHeadlines } from "@/lib/espn/news";
 import { matchupSideRecord, rankTrend } from "@/lib/format";
-import { leagueRules, teamBattle } from "@/lib/leagueConfig";
+import { leagueRules, leagueSettings, teamBattle } from "@/lib/leagueConfig";
 import { computeTeamBattle, formatCatRecord } from "@/lib/teamBattle";
+import { draftCountdown } from "@/lib/draftCountdown";
 import EmptyState from "@/components/EmptyState";
 import LeagueRules from "@/components/LeagueRules";
 import TeamLogo from "@/components/TeamLogo";
@@ -28,9 +29,10 @@ type HeroProps = {
   season: NonNullable<Awaited<ReturnType<typeof getCurrentSeason>>>;
   teams: TeamRow[];
   currentPeriod: number;
+  draftChip: string | null;
 };
 
-function DashboardHero({ season, teams, currentPeriod }: HeroProps) {
+function DashboardHero({ season, teams, currentPeriod, draftChip }: HeroProps) {
   const actionClass =
     "px-3 py-1.5 rounded-md border border-border bg-surface/80 hover:bg-surface-2 transition-colors";
   // Fully opaque — no translucency/backdrop-blur. Those let the page's
@@ -71,6 +73,11 @@ function DashboardHero({ season, teams, currentPeriod }: HeroProps) {
             "Preseason"
           )}
         </span>
+        {draftChip && (
+          <span className="stat-chip">
+            Draft in <strong>{draftChip}</strong>
+          </span>
+        )}
         <span className="stat-chip">
           Pot <strong>${leagueRules.totalPot}</strong>
         </span>
@@ -149,6 +156,7 @@ export default async function DashboardPage() {
   );
   const newsHeadlines = buildLeagueHeadlines(transactions, teams);
   const { rows: teamRows, started: teamsStarted } = computeTeamBattle(teamBattle.teams, allMatchups);
+  const countdown = draftCountdown(new Date(), leagueSettings.draft.startsAt);
 
   return (
     <div className="space-y-8">
@@ -163,8 +171,29 @@ export default async function DashboardPage() {
           background is fully opaque there's nothing left to blur or leak
           through, so plain `sticky` works cleanly.) */}
       <div className="sticky top-[61px] z-[5]">
-        <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} />
+        <DashboardHero
+          season={season}
+          teams={teams}
+          currentPeriod={currentPeriod}
+          draftChip={countdown?.short ?? null}
+        />
       </div>
+
+      {countdown && (
+        <div className="card glow-accent p-4 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-accent uppercase tracking-wide">
+              {leagueSettings.draft.type} draft
+            </p>
+            <p className="font-semibold mt-0.5">
+              {leagueSettings.draft.date} · {leagueSettings.draft.time}
+            </p>
+          </div>
+          <p className="text-2xl font-semibold tabular-nums text-accent shrink-0 text-right">
+            {countdown.label}
+          </p>
+        </div>
+      )}
 
       <section>
         <div className="flex items-center justify-between mb-3">
@@ -186,13 +215,19 @@ export default async function DashboardPage() {
             >
               <div className="flex items-center justify-between">
                 <p className="font-display text-xl tracking-wide">{r.name}</p>
-                <span className="text-xl font-semibold text-accent tabular-nums">
-                  {teamsStarted ? r.rank : "—"}
-                </span>
+                {teamsStarted && (
+                  <span className="text-xl font-semibold text-accent tabular-nums">{r.rank}</span>
+                )}
               </div>
-              <p className="text-2xl font-semibold tabular-nums mt-2">{formatCatRecord(r)}</p>
+              <p
+                className={`font-semibold tabular-nums mt-2 ${
+                  teamsStarted ? "text-2xl" : "text-lg text-muted"
+                }`}
+              >
+                {teamsStarted ? formatCatRecord(r) : "Starts Week 1"}
+              </p>
               <p className="text-muted text-xs mt-0.5">
-                {teamsStarted ? `${(r.catWinPct * 100).toFixed(1)}% of cats` : "cats W-L-T"}
+                {teamsStarted ? `${(r.catWinPct * 100).toFixed(1)}% of cats` : "4 managers"}
               </p>
               <div className="flex -space-x-1.5 mt-3">
                 {r.members.map((mem) => {
@@ -310,7 +345,10 @@ export default async function DashboardPage() {
                 const home = teamFor(teams, m.home_team_id);
                 const away = m.away_team_id ? teamFor(teams, m.away_team_id) : null;
                 return (
-                  <div key={m.id} className="card card-hover p-4 flex items-center justify-between gap-2">
+                  <div
+                    key={m.id}
+                    className="card card-hover p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  >
                     <Link href={`/teams/${m.home_team_id}`} className="flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity">
                       <TeamLogo logo={home?.logo} name={home?.name ?? "Team"} size={36} />
                       <div className="min-w-0">
@@ -320,11 +358,11 @@ export default async function DashboardPage() {
                         </p>
                       </div>
                     </Link>
-                    <span className="text-muted text-xs px-2 font-display tracking-widest shrink-0">VS</span>
+                    <span className="text-muted text-xs sm:px-2 font-display tracking-widest shrink-0 self-center">VS</span>
                     {away ? (
                       <Link
                         href={`/teams/${m.away_team_id}`}
-                        className="flex items-center gap-3 flex-row-reverse text-right min-w-0 hover:opacity-90 transition-opacity"
+                        className="flex items-center gap-3 sm:flex-row-reverse sm:text-right min-w-0 hover:opacity-90 transition-opacity"
                       >
                         <TeamLogo logo={away.logo} name={away.name} size={36} />
                         <div className="min-w-0">
@@ -335,7 +373,7 @@ export default async function DashboardPage() {
                         </div>
                       </Link>
                     ) : (
-                      <div className="flex items-center gap-3 flex-row-reverse text-right min-w-0">
+                      <div className="flex items-center gap-3 sm:flex-row-reverse sm:text-right min-w-0">
                         <TeamLogo logo={null} name="Bye" size={36} />
                         <div className="min-w-0">
                           <p className="font-medium truncate">Bye</p>

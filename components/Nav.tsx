@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -32,27 +33,31 @@ function BallMark() {
 
 export default function Nav() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  // "/teams" is exact-match only: /teams/<id> is an individual manager's
+  // page, not the 4-team overlay, so it shouldn't light up this tab.
+  const isActive = (href: string) =>
+    href === "/" || href === "/teams" ? pathname === href : pathname?.startsWith(href);
 
   // Fully opaque — see the comment on the dashboard hero: a translucent
   // + blurred sticky header lets scrolling content ghost through it.
+  //
+  // The full tab row needs ~1250px, so below `xl` the tabs collapse into a
+  // menu button — on a phone a sideways-scrolling row hid most of the tabs.
   return (
     <header className="border-b border-border bg-surface sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0" onClick={() => setOpen(false)}>
           <BallMark />
           <span className="font-display text-xl tracking-wide text-gradient">
             United Nations FBL
           </span>
         </Link>
-        <nav className="flex items-center gap-1 overflow-x-auto text-sm">
+
+        <nav className="hidden xl:flex items-center gap-1 text-sm">
           {links.map((l) => {
-            // "/teams" is exact-match only: /teams/<id> is an individual
-            // manager's page, not the 4-team overlay, so it shouldn't light
-            // up this tab.
-            const active =
-              l.href === "/" || l.href === "/teams"
-                ? pathname === l.href
-                : pathname?.startsWith(l.href);
+            const active = isActive(l.href);
             return (
               <Link
                 key={l.href}
@@ -71,7 +76,51 @@ export default function Nav() {
             );
           })}
         </nav>
+
+        <button
+          type="button"
+          className="xl:hidden h-8 w-8 shrink-0 inline-flex items-center justify-center rounded-md text-muted hover:text-foreground hover:bg-surface-2 transition-colors"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="mobile-nav"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            {open ? (
+              <path d="M4 4l12 12M16 4L4 16" />
+            ) : (
+              <path d="M3 6h14M3 10h14M3 14h14" />
+            )}
+          </svg>
+        </button>
       </div>
+
+      {open && (
+        <nav
+          id="mobile-nav"
+          className="xl:hidden border-t border-border bg-surface max-h-[calc(100vh-61px)] overflow-y-auto"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-col">
+            {links.map((l) => {
+              const active = isActive(l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className={`px-3 py-2.5 rounded-md text-sm transition-colors ${
+                    active
+                      ? "text-foreground bg-surface-2 font-medium"
+                      : "text-muted hover:text-foreground hover:bg-surface-2"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
