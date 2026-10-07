@@ -72,9 +72,6 @@ export const leagueSettings = {
     date: "Fri, Oct 16",
     time: "7:30 PM EDT",
     cap: 200, // same for every team this year
-    detail: "Every team gets $200. Draft order is just nomination order.",
-    // espn_team_id, in nomination order (pick 1 first)
-    nominationOrder: [9, 15, 18, 22, 21, 19, 4, 1, 8, 6, 11, 3, 20, 23, 5, 2],
   },
   waivers: {
     type: "Free agent budget (FAAB)",

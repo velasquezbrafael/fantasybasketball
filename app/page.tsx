@@ -352,7 +352,7 @@ export default async function DashboardPage() {
         </>
       )}
 
-      <LeagueRules teams={teams} />
+      <LeagueRules />
 
       <section>
         <div className="flex items-center justify-between mb-3">

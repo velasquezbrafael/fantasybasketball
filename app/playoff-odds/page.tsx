@@ -66,10 +66,14 @@ export default async function PlayoffOddsPage() {
   const totalRegularSeasonGames = matchups.filter((m) => !m.playoff_tier_type).length;
   const seasonStarted = decidedCount > 0;
 
-  const odds =
-    remainingMatchups.length === 0 && !seasonStarted
-      ? [] // nothing decided and nothing to simulate — shouldn't happen, guard anyway
-      : simulatePlayoffOdds(simTeams, remainingMatchups, leagueRules.playoffFormat);
+  // Before any game is decided every team has the same strength and a 0-0
+  // record, so the simulation would just be noise (plus a slight alphabetical
+  // tiebreak bias). Don't simulate at all preseason — list the teams with no
+  // percentages until real results exist.
+  const odds = seasonStarted
+    ? simulatePlayoffOdds(simTeams, remainingMatchups, leagueRules.playoffFormat)
+    : [];
+  const previewTeams = [...teams].sort((a, b) => a.name.localeCompare(b.name));
 
   const { autoByeCount, playInFieldSize } = leagueRules.playoffFormat;
 
@@ -79,10 +83,8 @@ export default async function PlayoffOddsPage() {
         <h1 className="font-display text-4xl tracking-wide text-gradient">Playoff Odds</h1>
         <p className="text-muted text-sm mt-1">
           {seasonStarted
-            ? `${decidedCount} of ${totalRegularSeasonGames} regular-season games played — `
-            : "Preseason — "}
-          {(8000).toLocaleString()} simulated seasons using each team&rsquo;s Power Ranking score
-          against the league&rsquo;s real remaining schedule.
+            ? `${decidedCount} of ${totalRegularSeasonGames} regular-season games played — ${(8000).toLocaleString()} simulated seasons using each team's Power Ranking score against the league's real remaining schedule.`
+            : "Preseason — odds appear once the first games are played."}
         </p>
         <p className="text-muted text-xs mt-2">
           Top {autoByeCount} clinch the bracket outright. The next {playInFieldSize} fight for the
@@ -90,6 +92,7 @@ export default async function PlayoffOddsPage() {
         </p>
       </div>
 
+      {seasonStarted && (
       <div className="card p-4 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted">
         <span className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-accent-2 inline-block" /> Clinches bracket (top {autoByeCount})
@@ -102,6 +105,7 @@ export default async function PlayoffOddsPage() {
           <span className="w-2.5 h-2.5 rounded-full bg-surface-2 border border-border inline-block" /> Misses playoffs
         </span>
       </div>
+      )}
 
       <div className="card divide-y divide-border overflow-hidden">
         <div className="p-3 flex items-center gap-4 text-xs text-muted uppercase tracking-wide">
@@ -112,6 +116,23 @@ export default async function PlayoffOddsPage() {
           <span className="w-20 text-right">Make Playoffs</span>
           <span className="hidden sm:block w-28 text-right">Proj. Record</span>
         </div>
+        {!seasonStarted &&
+          previewTeams.map((t) => (
+            <div key={t.espn_team_id} className="p-4 flex items-center gap-4 card-hover">
+              <span className="text-lg font-semibold text-muted w-7 text-center">—</span>
+              <Link
+                href={`/teams/${t.espn_team_id}`}
+                className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-90 transition-opacity"
+              >
+                <TeamLogo logo={t.logo} name={t.name} size={30} />
+                <p className="font-medium truncate">{t.name}</p>
+              </Link>
+              <span className="hidden sm:block w-16 text-right tabular-nums text-sm">0-0</span>
+              <div className="hidden md:block w-32" />
+              <span className="w-20 text-right text-muted">—</span>
+              <span className="hidden sm:block w-28 text-right text-muted text-sm">—</span>
+            </div>
+          ))}
         {odds.map((o, i) => (
           <div key={o.espnTeamId} className="p-4 flex items-center gap-4 card-hover">
             <span className="text-lg font-semibold text-accent w-7 text-center tabular-nums">{i + 1}</span>
@@ -153,7 +174,7 @@ export default async function PlayoffOddsPage() {
             </span>
           </div>
         ))}
-        {odds.length === 0 && (
+        {seasonStarted && odds.length === 0 && (
           <div className="p-6">
             <EmptyState />
           </div>

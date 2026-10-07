@@ -1,8 +1,5 @@
 import Link from "next/link";
 import { leagueRules, leagueSettings } from "@/lib/leagueConfig";
-import TeamLogo from "@/components/TeamLogo";
-
-type TeamLite = { espn_team_id: number; name: string; logo: string | null };
 
 function RuleCard({
   title,
@@ -29,11 +26,10 @@ function RuleCard({
   );
 }
 
-export default function LeagueRules({ teams }: { teams: TeamLite[] }) {
+export default function LeagueRules() {
   const { draft, waivers, roster } = leagueSettings;
   const { playoffFormat, championsPot, specialWinningsPot, cashAwards } = leagueRules;
   const bracketSize = playoffFormat.autoByeCount + playoffFormat.playInAdvanceCount;
-  const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
 
   return (
     <section>
@@ -47,24 +43,8 @@ export default function LeagueRules({ teams }: { teams: TeamLite[] }) {
         <RuleCard
           title="Draft"
           headline={`${draft.type} — ${draft.date}, ${draft.time}`}
-          lines={[`$${draft.cap} budget for every team`, draft.detail]}
-        >
-          <details className="mt-3 text-sm">
-            <summary className="cursor-pointer text-accent hover:underline">Nomination order</summary>
-            <ol className="mt-2 space-y-1.5">
-              {draft.nominationOrder.map((id, i) => {
-                const t = teamFor(id);
-                return (
-                  <li key={id} className="flex items-center gap-2">
-                    <span className="text-muted w-5 tabular-nums text-right">{i + 1}</span>
-                    <TeamLogo logo={t?.logo} name={t?.name ?? "Team"} size={20} />
-                    <span className="truncate">{t?.name ?? `Team ${id}`}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          </details>
-        </RuleCard>
+          lines={[`$${draft.cap} budget for every team this year`]}
+        />
 
         <RuleCard
           title="Waivers"
