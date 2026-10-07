@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getAllTeamSeasonRows } from "@/lib/data";
 import { computeAllTimeStandings } from "@/lib/teamStats";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "All-Time Records" };
 
 export const dynamic = "force-dynamic";
 
@@ -37,14 +40,14 @@ export default async function RecordsPage() {
         <table className="w-full text-sm">
           <thead className="bg-surface-2 text-muted text-xs uppercase tracking-wide">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">#</th>
-              <th className="text-left px-4 py-3 font-medium">Team</th>
-              <th className="text-right px-4 py-3 font-medium">Seasons</th>
-              <th className="text-right px-4 py-3 font-medium">Titles</th>
-              <th className="text-right px-4 py-3 font-medium">Best Finish</th>
-              <th className="text-right px-4 py-3 font-medium">Career Record</th>
-              <th className="text-right px-4 py-3 font-medium">Career Win%</th>
-              <th className="text-right px-4 py-3 font-medium">Best Season</th>
+              <th className="text-left px-3 sm:px-4 py-3 font-medium">#</th>
+              <th className="text-left px-3 sm:px-4 py-3 font-medium">Team</th>
+              <th className="hidden sm:table-cell text-right px-4 py-3 font-medium">Seasons</th>
+              <th className="hidden sm:table-cell text-right px-4 py-3 font-medium">Titles</th>
+              <th className="hidden sm:table-cell text-right px-4 py-3 font-medium">Best Finish</th>
+              <th className="text-right px-3 sm:px-4 py-3 font-medium">Career Record</th>
+              <th className="text-right px-3 sm:px-4 py-3 font-medium">Career Win%</th>
+              <th className="hidden sm:table-cell text-right px-4 py-3 font-medium">Best Season</th>
             </tr>
           </thead>
           <tbody>
@@ -55,34 +58,40 @@ export default async function RecordsPage() {
                   MEDAL_ROW_CLASS[i] ?? ""
                 }`}
               >
-                <td className="px-4 py-3 text-muted">{i + 1}</td>
-                <td className="px-4 py-3 font-medium">
+                <td className="px-3 sm:px-4 py-3 text-muted">{i + 1}</td>
+                <td className="px-3 sm:px-4 py-3 font-medium">
                   <Link href={`/teams/${s.espnTeamId}`} className="flex items-center gap-2.5 hover:text-accent transition-colors">
                     <TeamLogo logo={s.logo} name={s.name} size={26} />
-                    <span>
+                    <span className="min-w-0 [overflow-wrap:anywhere]">
                       {s.name}
                       {s.championships === mostTitles && mostTitles > 0 && (
                         <span className="ml-1.5">👑</span>
                       )}
+                      {s.championships > 0 && (
+                        <span className="sm:hidden block text-xs font-normal text-muted mt-0.5">
+                          {"🏆".repeat(Math.min(s.championships, 3))}
+                          {s.championships > 3 && ` ×${s.championships}`}
+                        </span>
+                      )}
                     </span>
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">{s.seasonsPlayed}</td>
-                <td className="px-4 py-3 text-right tabular-nums">
+                <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums">{s.seasonsPlayed}</td>
+                <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums whitespace-nowrap">
                   {s.championships > 0 ? "🏆".repeat(Math.min(s.championships, 3)) : "—"}
                   {s.championships > 3 && ` ×${s.championships}`}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-muted">
+                <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-muted">
                   {s.bestFinish != null ? `#${s.bestFinish}` : "—"}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">
+                <td className="px-3 sm:px-4 py-3 text-right tabular-nums whitespace-nowrap">
                   {s.totalWins}-{s.totalLosses}
                   {s.totalTies ? `-${s.totalTies}` : ""}
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums">
+                <td className="px-3 sm:px-4 py-3 text-right tabular-nums">
                   {(s.careerWinPct * 100).toFixed(1)}%
                 </td>
-                <td className="px-4 py-3 text-right tabular-nums text-muted">
+                <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums text-muted">
                   {s.bestSeasonId != null
                     ? `${(s.bestSeasonWinPct * 100).toFixed(0)}% (${seasonLabel(s.bestSeasonId)})`
                     : "—"}

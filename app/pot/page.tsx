@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -12,6 +13,8 @@ import { categoryOfWeek, leagueRules } from "@/lib/leagueConfig";
 import { fetchTopPlayersByPosition, type TopPlayer } from "@/lib/espn/players";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "The Pot" };
 
 export const dynamic = "force-dynamic";
 
@@ -72,11 +75,15 @@ export default async function PotPage() {
   // computeWeeklyWinnerRows returns chronological (week 1 first) — this
   // condensed preview wants the most recently-relevant weeks up top, so
   // flip it just for display here.
+  // Preseason there is no "recent", so show the first weeks coming up instead
+  // of the tail end of the schedule (Weeks 15-11).
   const weeklyRowsRecentFirst = [...computeWeeklyWinnerRows(
     matchups,
     leagueRules.specialWinningsPot.weekWinner.weeks,
     currentPeriod
-  )].sort((a, b) => b.matchupPeriodId - a.matchupPeriodId);
+  )].sort((a, b) =>
+    seasonStarted ? b.matchupPeriodId - a.matchupPeriodId : a.matchupPeriodId - b.matchupPeriodId
+  );
   const teamFor = (id: number) => teams.find((t) => t.espn_team_id === id);
   const nameFor = (id: number) => teamFor(id)?.name ?? `Team ${id}`;
 
@@ -92,7 +99,7 @@ export default async function PotPage() {
 
       <section>
         <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
-          If the season ended today
+          {seasonStarted ? "If the season ended today" : "Champions Pot"}
         </h2>
         {seasonStarted ? (
           <>
@@ -137,9 +144,36 @@ export default async function PotPage() {
             </p>
           </>
         ) : (
-          <div className="card p-6">
-            <EmptyState title="Season hasn't started" detail="Standings will fill in once games are underway." />
-          </div>
+          <>
+            {/* Preseason: no teams in the spots yet, but the payout structure is
+                the whole point of this page, so show it. */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              {leagueRules.championsPot.payouts.map((p) => (
+                <div key={p.place} className={`card p-4 border ${MEDAL_CLASS[p.place] ?? ""}`}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">{p.place}</p>
+                    <span className="text-lg leading-none">{MEDAL_ICON[p.place]}</span>
+                  </div>
+                  <p className="text-muted text-sm mt-2.5">Open until games are played</p>
+                  <p className="text-lg font-semibold mt-2 tabular-nums">
+                    {p.amount}
+                    {p.extra ? ` ${p.extra}` : ""}
+                  </p>
+                </div>
+              ))}
+              <div className={`card p-4 border ${MEDAL_CLASS.Last}`}>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">Last</p>
+                  <span className="text-lg leading-none">{MEDAL_ICON.Last}</span>
+                </div>
+                <p className="text-muted text-sm mt-2.5">Open until games are played</p>
+                <p className="text-lg font-semibold mt-2">{leagueRules.championsPot.lastPlace.label}</p>
+              </div>
+            </div>
+            <p className="text-muted text-xs mt-3">
+              {leagueRules.championsPot.lastPlace.detail}
+            </p>
+          </>
         )}
       </section>
 

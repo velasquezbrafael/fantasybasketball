@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getAllSeasons, getTeams } from "@/lib/data";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "History" };
 
 export const dynamic = "force-dynamic";
 

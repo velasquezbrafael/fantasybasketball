@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -13,6 +14,8 @@ import { fetchEspnLeague, VIEWS } from "@/lib/espn/client";
 import type { EspnRosterEntry } from "@/lib/espn/types";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "Manager" };
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +155,10 @@ export default async function TeamPage({
     currentSeason ? getLatestPowerRankings(currentSeason.id) : Promise.resolve([]),
   ]);
   const latestRanking = powerRankings.find((r) => r.espn_team_id === espnTeamId) ?? null;
+  // Preseason the stored power_rank is just a tiebreak, not a real ranking —
+  // same rule as the Power Rankings page, which shows nothing until games exist.
+  const seasonStarted =
+    (currentSeasonRow?.wins ?? 0) + (currentSeasonRow?.losses ?? 0) + (currentSeasonRow?.ties ?? 0) > 0;
 
   const starters = (roster ?? [])
     .filter((e) => e.lineupSlotId < 12)
@@ -293,7 +300,7 @@ export default async function TeamPage({
               Power Rank Trend — {seasonLabel(currentSeason.id)}
             </h2>
             <div className="card p-4">
-              <PowerRankSparkline points={trend} />
+              <PowerRankSparkline points={seasonStarted ? trend : []} />
             </div>
           </section>
 
@@ -306,7 +313,7 @@ export default async function TeamPage({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-semibold tabular-nums">
-                      #{latestRanking.power_rank}
+                      {seasonStarted ? `#${latestRanking.power_rank}` : "—"}
                     </span>
                     <span className="text-muted text-xs">
                       Score <span className="text-foreground font-medium tabular-nums">

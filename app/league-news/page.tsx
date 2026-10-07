@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getTeams, getTransactions } from "@/lib/data";
 import { buildLeagueHeadlines, fetchRosterRelevantNbaNews, type NewsItem } from "@/lib/espn/news";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "League News" };
 
 export const dynamic = "force-dynamic";
 

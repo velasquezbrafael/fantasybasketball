@@ -21,7 +21,7 @@ const bebasNeue = Bebas_Neue({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://unitednationsfantasybasketballleague.vercel.app"),
-  title: "United Nations FBL",
+  title: { default: "United Nations FBL", template: "%s · United Nations FBL" },
   description: "League dashboard synced from ESPN Fantasy Basketball",
 };
 

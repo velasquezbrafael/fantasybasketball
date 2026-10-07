@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getLatestPowerRankings, getTeams } from "@/lib/data";
 import { rankTrend } from "@/lib/format";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "Power Rankings" };
 
 export const dynamic = "force-dynamic";
 

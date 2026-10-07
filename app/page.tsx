@@ -174,7 +174,7 @@ export default async function DashboardPage() {
         <DashboardHero
           season={season}
           teams={teams}
-          currentPeriod={currentPeriod}
+          currentPeriod={seasonStarted ? currentPeriod : 0}
           draftChip={countdown?.short ?? null}
         />
       </div>

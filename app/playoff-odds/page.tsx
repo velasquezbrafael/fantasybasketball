@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { getCurrentSeason, getMatchups, getLatestPowerRankings, getTeams } from "@/lib/data";
@@ -5,6 +6,8 @@ import { simulatePlayoffOdds, type SimMatchup, type SimTeam } from "@/lib/playof
 import { leagueRules } from "@/lib/leagueConfig";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
+
+export const metadata: Metadata = { title: "Playoff Odds" };
 
 export const dynamic = "force-dynamic";
 
