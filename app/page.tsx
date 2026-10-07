@@ -10,8 +10,10 @@ import {
 import { computeWeeklyWinners } from "@/lib/payouts";
 import { buildLeagueHeadlines } from "@/lib/espn/news";
 import { matchupSideRecord, rankTrend } from "@/lib/format";
-import { leagueRules } from "@/lib/leagueConfig";
+import { leagueRules, teamBattle } from "@/lib/leagueConfig";
+import { computeTeamBattle, formatCatRecord } from "@/lib/teamBattle";
 import EmptyState from "@/components/EmptyState";
+import LeagueRules from "@/components/LeagueRules";
 import TeamLogo from "@/components/TeamLogo";
 
 export const dynamic = "force-dynamic";
@@ -146,6 +148,7 @@ export default async function DashboardPage() {
       : nameOfTeam(a.espn_team_id).localeCompare(nameOfTeam(b.espn_team_id))
   );
   const newsHeadlines = buildLeagueHeadlines(transactions, teams);
+  const { rows: teamRows, started: teamsStarted } = computeTeamBattle(teamBattle.teams, allMatchups);
 
   return (
     <div className="space-y-8">
@@ -162,6 +165,52 @@ export default async function DashboardPage() {
       <div className="sticky top-[61px] z-[5]">
         <DashboardHero season={season} teams={teams} currentPeriod={currentPeriod} />
       </div>
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-medium text-muted uppercase tracking-wide">Teams</h2>
+          <Link href="/teams" className="text-sm text-accent hover:underline">
+            See members & rules →
+          </Link>
+        </div>
+        <p className="text-muted text-xs -mt-2 mb-3">
+          4 teams of 4 managers, scored by combined category W-L-T. Top team earns +$
+          {teamBattle.rewards[0].bonus} of auction budget next year.
+        </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {teamRows.map((r) => (
+            <Link
+              key={r.key}
+              href="/teams"
+              className="card card-hover p-4 block hover:opacity-90 transition-opacity"
+            >
+              <div className="flex items-center justify-between">
+                <p className="font-display text-xl tracking-wide">{r.name}</p>
+                <span className="text-xl font-semibold text-accent tabular-nums">
+                  {teamsStarted ? r.rank : "—"}
+                </span>
+              </div>
+              <p className="text-2xl font-semibold tabular-nums mt-2">{formatCatRecord(r)}</p>
+              <p className="text-muted text-xs mt-0.5">
+                {teamsStarted ? `${(r.catWinPct * 100).toFixed(1)}% of cats` : "cats W-L-T"}
+              </p>
+              <div className="flex -space-x-1.5 mt-3">
+                {r.members.map((mem) => {
+                  const t = teamFor(teams, mem.espnTeamId);
+                  return (
+                    <TeamLogo
+                      key={mem.espnTeamId}
+                      logo={t?.logo}
+                      name={t?.name ?? "Team"}
+                      size={24}
+                    />
+                  );
+                })}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {seasonNotStarted ? (
         <EmptyState
@@ -302,6 +351,8 @@ export default async function DashboardPage() {
           </section>
         </>
       )}
+
+      <LeagueRules teams={teams} />
 
       <section>
         <div className="flex items-center justify-between mb-3">

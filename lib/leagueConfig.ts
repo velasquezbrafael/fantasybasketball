@@ -63,6 +63,62 @@ export const leagueRules = {
   ],
 } as const;
 
+// ESPN league settings for 2026-27 — hand-entered like the rules above, since
+// none of this is derivable from the ESPN data we sync. Update this block if
+// the ESPN settings change.
+export const leagueSettings = {
+  draft: {
+    type: "Salary cap (auction)",
+    date: "Fri, Oct 16",
+    time: "7:30 PM EDT",
+    cap: 200, // same for every team this year
+    detail: "Every team gets $200. Draft order is just nomination order.",
+    // espn_team_id, in nomination order (pick 1 first)
+    nominationOrder: [9, 15, 18, 22, 21, 19, 4, 1, 8, 6, 11, 3, 20, 23, 5, 2],
+  },
+  waivers: {
+    type: "Free agent budget (FAAB)",
+    budget: 100,
+    minBid: 1,
+    addsPerMatchup: 2,
+    detail: "Highest bid wins. The $100 has to last the whole season.",
+  },
+  roster: {
+    size: 13,
+    starters: 9,
+    bench: 4,
+    ir: 2,
+  },
+} as const;
+
+// The "Teams" overlay: the 16 managers grouped into 4 teams of 4, snaked by
+// last season's (2026) final finish so every team gets one manager from each
+// quartile (rank sums all 34). Members are ESPN team ids — stable across
+// renames — not display names. Teams compete THIS season; the reward is for
+// NEXT year's auction.
+export const teamBattle = {
+  scoring:
+    "Combined category W-L-T across all 4 managers, regular season only. Ranked by category win % (a tie counts as half a win).",
+  tiebreaker: "Combined matchup W-L, then team letter.",
+  rewardNote: "Next year's auction budget bonus, by team finish.",
+  teams: [
+    { key: "A", name: "Team A", memberIds: [6, 22, 21, 18] }, // Cream Team, Us_Whole$, Team ONT, King of NY
+    { key: "B", name: "Team B", memberIds: [19, 4, 15, 9] }, // KD's Nutsack, Team Balls, Hapboarnick, Team Crippled
+    { key: "C", name: "Team C", memberIds: [8, 11, 2, 5] }, // WNY Wenekleks, I Don't Have Bol Bol, Team UNited SnL, White Men Can Jump
+    { key: "D", name: "Team D", memberIds: [1, 20, 23, 3] }, // The Bol Bol's, Noah's Nifty Team, Matt's Mid Team, ConstantlyBallin...
+  ],
+  // Extra auction budget for next year, indexed by team finish (1st..4th).
+  // ESPN only has one league-wide cap, so it is set to the top tier ($220)
+  // and each team's own cap is enforced by league rule.
+  rewards: [
+    { place: "1st", bonus: 20 },
+    { place: "2nd", bonus: 10 },
+    { place: "3rd", bonus: 5 },
+    { place: "4th", bonus: 0 },
+  ],
+  nextYearBaseCap: 200,
+} as const;
+
 // This league's 9 scoring categories, in the order they cycle through the
 // first 9 weeks of the season (Week 1 = PTS, Week 2 = REB, ... Week 9 = TO).
 // After week 9 the "category of the week" badge is randomized instead —

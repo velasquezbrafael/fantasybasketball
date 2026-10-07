@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/", label: "Dashboard" },
+  { href: "/teams", label: "Teams" },
   { href: "/power-rankings", label: "Power Rankings" },
   { href: "/playoff-odds", label: "Playoff Odds" },
   { href: "/standings", label: "Standings" },
@@ -36,7 +37,7 @@ export default function Nav() {
   // + blurred sticky header lets scrolling content ghost through it.
   return (
     <header className="border-b border-border bg-surface sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <BallMark />
           <span className="font-display text-xl tracking-wide text-gradient">
@@ -45,12 +46,18 @@ export default function Nav() {
         </Link>
         <nav className="flex items-center gap-1 overflow-x-auto text-sm">
           {links.map((l) => {
-            const active = l.href === "/" ? pathname === "/" : pathname?.startsWith(l.href);
+            // "/teams" is exact-match only: /teams/<id> is an individual
+            // manager's page, not the 4-team overlay, so it shouldn't light
+            // up this tab.
+            const active =
+              l.href === "/" || l.href === "/teams"
+                ? pathname === l.href
+                : pathname?.startsWith(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`relative px-3 py-1.5 rounded-md whitespace-nowrap transition-colors ${
+                className={`relative px-2.5 py-1.5 rounded-md whitespace-nowrap transition-colors ${
                   active
                     ? "text-foreground bg-surface-2 font-medium"
                     : "text-muted hover:text-foreground hover:bg-surface-2"
