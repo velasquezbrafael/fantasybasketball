@@ -4,12 +4,14 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   getAllTeamSeasonRows,
   getCurrentSeason,
+  getDraftPicks,
   getLatestPowerRankings,
   getPowerRankTrend,
   getTeamMatchups,
   getTeamSeasons,
 } from "@/lib/data";
 import { buildTeamNameMap, computeHeadToHead } from "@/lib/teamStats";
+import { leagueSettings } from "@/lib/leagueConfig";
 import { fetchEspnLeague, VIEWS } from "@/lib/espn/client";
 import type { EspnRosterEntry } from "@/lib/espn/types";
 import EmptyState from "@/components/EmptyState";
@@ -149,11 +151,17 @@ export default async function TeamPage({
     ? teamSeasons.find((s) => s.season_id === currentSeason.id) ?? null
     : null;
 
-  const [trend, roster, powerRankings] = await Promise.all([
+  const [trend, roster, powerRankings, draftPicks] = await Promise.all([
     currentSeason ? getPowerRankTrend(currentSeason.id, espnTeamId) : Promise.resolve([]),
     currentSeason ? fetchTeamRoster(currentSeason.id, espnTeamId) : Promise.resolve(null),
     currentSeason ? getLatestPowerRankings(currentSeason.id) : Promise.resolve([]),
+    currentSeason ? getDraftPicks(currentSeason.id) : Promise.resolve([]),
   ]);
+  // What each player cost at the auction (by ESPN player id), for this team only.
+  const priceByPlayer = new Map(
+    draftPicks.filter((p) => p.espn_team_id === espnTeamId).map((p) => [p.player_id, p.bid_amount])
+  );
+  const draftSpent = Array.from(priceByPlayer.values()).reduce((s, n) => s + n, 0);
   const latestRanking = powerRankings.find((r) => r.espn_team_id === espnTeamId) ?? null;
   // Preseason the stored power_rank is just a tiebreak, not a real ranking —
   // same rule as the Power Rankings page, which shows nothing until games exist.
@@ -172,11 +180,16 @@ export default async function TeamPage({
     return (
       <div className="flex items-center justify-between py-1.5 text-sm">
         <span className="truncate">{player.fullName}</span>
-        {hurt && (
-          <span className="text-danger text-xs font-medium shrink-0 ml-2">
-            {player.injuryStatus?.replace(/_/g, " ")}
-          </span>
-        )}
+        <span className="flex items-center gap-2 shrink-0 ml-2">
+          {hurt && (
+            <span className="text-danger text-xs font-medium">
+              {player.injuryStatus?.replace(/_/g, " ")}
+            </span>
+          )}
+          {priceByPlayer.has(entry.playerId) && (
+            <span className="text-muted text-xs tabular-nums">${priceByPlayer.get(entry.playerId)}</span>
+          )}
+        </span>
       </div>
     );
   }
@@ -390,6 +403,11 @@ export default async function TeamPage({
           <section>
             <h2 className="text-sm font-medium text-muted uppercase tracking-wide mb-3">
               Current Roster
+              {priceByPlayer.size > 0 && (
+                <span className="normal-case tracking-normal ml-2">
+                  · ${draftSpent} of ${leagueSettings.draft.cap} spent at the auction
+                </span>
+              )}
             </h2>
             <div className="card p-4">
               {roster === null && (

@@ -104,6 +104,9 @@ export const VIEWS = {
   // harmless to request, but real transaction data comes from
   // fetchRecentActivity below instead.
   transactions: "mTransactions2",
+  // Full draft results (auction bids, nominators). Empty `picks` until
+  // the draft has happened.
+  draft: "mDraftDetail",
 } as const;
 
 // ESPN's own message-type codes for a roster-activity message, as seen in

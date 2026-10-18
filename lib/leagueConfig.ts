@@ -52,7 +52,7 @@ export const leagueRules = {
   },
 
   cashAwards: [
-    { label: "Best draft pick", detail: "(player rating × # pick)", amount: 5 },
+    { label: "Best draft pick", detail: "(biggest value over the price paid)", amount: 5 },
     { label: "Best waiver wire pickup", detail: "(player rating)", amount: 5 },
     { label: "Best regular season record", amount: 10 },
   ],

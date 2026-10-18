@@ -2,6 +2,7 @@ import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   getCurrentSeason,
+  getDraftPicks,
   getLatestPowerRankings,
   getMatchups,
   getTeams,
@@ -157,6 +158,9 @@ export default async function DashboardPage() {
   const newsHeadlines = buildLeagueHeadlines(transactions, teams);
   const { rows: teamRows, started: teamsStarted } = computeTeamBattle(teamBattle.teams, allMatchups);
   const countdown = draftCountdown(new Date(), leagueSettings.draft.startsAt);
+  const draftPicks = await getDraftPicks(season.id);
+  const draftSpent = draftPicks.reduce((s, p) => s + p.bid_amount, 0);
+  const draftTop = [...draftPicks].sort((a, b) => b.bid_amount - a.bid_amount)[0];
 
   return (
     <div className="space-y-8">
@@ -193,6 +197,19 @@ export default async function DashboardPage() {
             {countdown.label}
           </p>
         </div>
+      )}
+
+      {!countdown && draftPicks.length > 0 && (
+        <Link href="/draft" className="card card-hover p-4 flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-accent uppercase tracking-wide">Draft complete</p>
+            <p className="font-semibold mt-0.5">
+              {draftPicks.length} players · ${draftSpent.toLocaleString()} spent
+              {draftTop ? ` · top bid ${draftTop.player_name} $${draftTop.bid_amount}` : ""}
+            </p>
+          </div>
+          <span className="text-sm text-accent shrink-0">Draft recap →</span>
+        </Link>
       )}
 
       <section>

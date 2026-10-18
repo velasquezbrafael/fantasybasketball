@@ -155,3 +155,26 @@ export async function getPowerRankTrend(seasonId: number, espnTeamId: number) {
     .order("captured_at", { ascending: true });
   return data ?? [];
 }
+
+export interface DraftPickRow {
+  overall_pick: number;
+  round: number | null;
+  espn_team_id: number;
+  nominating_team_id: number | null;
+  player_id: number;
+  player_name: string;
+  bid_amount: number;
+}
+
+/** Auction results, in pick order. Empty until the draft_picks table exists and a sync has run. */
+export async function getDraftPicks(seasonId: number): Promise<DraftPickRow[]> {
+  const supabase = getSupabaseServiceClient();
+  const { data } = await supabase
+    .from("draft_picks")
+    .select(
+      "overall_pick, round, espn_team_id, nominating_team_id, player_id, player_name, bid_amount"
+    )
+    .eq("season_id", seasonId)
+    .order("overall_pick", { ascending: true });
+  return (data ?? []) as DraftPickRow[];
+}

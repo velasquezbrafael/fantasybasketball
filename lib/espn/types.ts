@@ -124,6 +124,25 @@ export interface EspnLeagueSettings {
   };
 }
 
+export interface EspnDraftPick {
+  overallPickNumber: number;
+  roundId?: number;
+  roundPickNumber?: number;
+  teamId: number;
+  playerId: number;
+  // Auction leagues: the winning bid in dollars.
+  bidAmount?: number;
+  nominatingTeamId?: number;
+  keeper?: boolean;
+}
+
+export interface EspnDraftDetail {
+  drafted?: boolean;
+  inProgress?: boolean;
+  completeDate?: number;
+  picks?: EspnDraftPick[];
+}
+
 export interface EspnLeagueResponse {
   id: number;
   seasonId: number;
@@ -136,4 +155,6 @@ export interface EspnLeagueResponse {
   teams: EspnTeam[];
   schedule: EspnMatchup[];
   transactions?: EspnTransaction[];
+  // Only present when the `mDraftDetail` view is requested.
+  draftDetail?: EspnDraftDetail;
 }

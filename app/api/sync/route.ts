@@ -39,6 +39,7 @@ async function syncSeason(
       VIEWS.settings,
       VIEWS.standings,
       VIEWS.transactions,
+      VIEWS.draft,
     ],
     { historical, auth }
   );
@@ -168,11 +169,43 @@ async function syncSeason(
     );
   }
 
+  // Auction draft results. Tolerant by design: if the draft_picks table
+  // hasn't been created yet (migration_005_draft.sql) we report it and
+  // carry on instead of failing the whole sync.
+  const picks = league.draftDetail?.picks ?? [];
+  let draftPicks = 0;
+  let draftNote: string | undefined;
+  if (picks.length > 0) {
+    const nameMap = await resolvePlayerNames(
+      season,
+      picks.map((p) => p.playerId),
+      auth
+    );
+    const { error } = await supabase.from("draft_picks").upsert(
+      picks.map((p) => ({
+        season_id: season,
+        overall_pick: p.overallPickNumber,
+        round: p.roundId ?? null,
+        espn_team_id: p.teamId,
+        nominating_team_id: p.nominatingTeamId ?? null,
+        player_id: p.playerId,
+        player_name: nameMap.get(p.playerId) ?? `Player #${p.playerId}`,
+        bid_amount: p.bidAmount ?? 0,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: "season_id,overall_pick" }
+    );
+    if (error) draftNote = `draft_picks not saved: ${error.message}`;
+    else draftPicks = picks.length;
+  }
+
   return {
     season,
     teams: teams.length,
     matchups: matchups.length,
     transactions: transactions.length,
+    draftPicks,
+    ...(draftNote ? { draftNote } : {}),
   };
 }
 
