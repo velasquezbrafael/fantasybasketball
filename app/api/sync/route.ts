@@ -11,10 +11,6 @@ import { getSupabaseServiceClient } from "@/lib/supabase/client";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function unauthorized() {
-  return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-}
-
 async function syncSeason(
   season: number,
   { historical, auth }: { historical: boolean; auth: EspnAuth }
@@ -228,8 +224,20 @@ export async function POST(req: NextRequest) {
     req.headers.get("x-sync-secret") ??
     req.nextUrl.searchParams.get("secret");
 
-  if (!process.env.SYNC_SECRET || secret !== process.env.SYNC_SECRET) {
-    return unauthorized();
+  // Trim both sides: a trailing space or newline pasted into the Vercel
+  // env var (or the curl) is the most common reason a "matching" secret fails.
+  const expected = process.env.SYNC_SECRET?.trim();
+  if (!expected) {
+    return NextResponse.json(
+      { error: "unauthorized", reason: "SYNC_SECRET is empty or missing on the server (check Vercel env vars, then redeploy)" },
+      { status: 401 }
+    );
+  }
+  if (secret?.trim() !== expected) {
+    return NextResponse.json(
+      { error: "unauthorized", reason: secret ? "secret does not match SYNC_SECRET" : "no secret was sent" },
+      { status: 401 }
+    );
   }
 
   const auth: EspnAuth = {
