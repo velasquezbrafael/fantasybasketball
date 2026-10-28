@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchEspnLeague, fetchRecentActivity, VIEWS, type EspnAuth } from "@/lib/espn/client";
+import {
+  fetchEspnLeague,
+  fetchRecentActivity,
+  fetchTransactionsByPeriod,
+  VIEWS,
+  type EspnAuth,
+} from "@/lib/espn/client";
 import {
   computePowerRankings,
   normalizeMatchups,
@@ -140,9 +146,22 @@ async function syncSeason(
   // activity-feed endpoint that only exists for the currently-live
   // season, so this is a no-op (not an error) for historical seasons.
   const activityTypesSeen: Record<number, number> = {};
-  const transactions = historical
+  let transactions = historical
     ? []
     : await fetchRecentActivity(season, auth, 100, activityTypesSeen);
+  // The activity feed returned nothing at all for this league's FAAB claims
+  // (no topics, so no message types either). Fall back to ESPN's per-period
+  // transactions view and report what it saw.
+  const txDebug: Record<string, unknown> = {};
+  if (!historical && transactions.length === 0) {
+    transactions = await fetchTransactionsByPeriod(
+      season,
+      auth,
+      league.status?.latestScoringPeriod ?? 1,
+      21,
+      txDebug
+    );
+  }
   if (transactions.length > 0) {
     const allPlayerIds = transactions.flatMap(
       (t) => t.items?.map((i) => i.playerId) ?? []
@@ -207,6 +226,7 @@ async function syncSeason(
     // ESPN activity message-type codes seen this sync (code -> count). If
     // League News is empty but this isn't, one of these is the missing code.
     activityTypesSeen,
+    txDebug,
     ...(draftNote ? { draftNote } : {}),
   };
 }

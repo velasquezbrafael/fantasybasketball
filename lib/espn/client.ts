@@ -234,3 +234,97 @@ export async function fetchRecentActivity(
 
   return transactions;
 }
+
+interface EspnTxItem {
+  playerId: number;
+  type: string;
+  fromTeamId?: number;
+  toTeamId?: number;
+}
+
+interface EspnTxRow {
+  id: string;
+  type: string;
+  status: string;
+  teamId?: number;
+  proposedDate?: number;
+  processDate?: number;
+  items?: EspnTxItem[];
+}
+
+/**
+ * Second source for roster moves, used when the activity feed above comes
+ * back empty (it did for this league's first week of FAAB claims, even
+ * though adds had clearly happened). ESPN's `mTransactions2` view only
+ * returns rows when asked for a specific scoring period, so this walks back
+ * through the most recent ones. Executed moves only. `debug` records what
+ * each call returned so a sync response shows exactly where data is missing.
+ */
+export async function fetchTransactionsByPeriod(
+  season: number,
+  auth: EspnAuth,
+  latestScoringPeriod: number,
+  periodsBack = 21,
+  debug?: Record<string, unknown>
+): Promise<EspnTransaction[]> {
+  const periods: number[] = [];
+  for (let p = latestScoringPeriod; p >= Math.max(1, latestScoringPeriod - periodsBack); p--) {
+    periods.push(p);
+  }
+
+  const statuses: Record<string, number> = {};
+  const rows = await Promise.all(
+    periods.map(async (p) => {
+      try {
+        const res = await fetch(
+          `${BASE}/seasons/${season}/segments/0/leagues/${auth.leagueId}?view=mTransactions2&scoringPeriodId=${p}`,
+          {
+            headers: {
+              Cookie: `espn_s2=${auth.espnS2}; SWID=${auth.swid}`,
+              "User-Agent":
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+              Accept: "application/json",
+            },
+            cache: "no-store",
+          }
+        );
+        statuses[String(res.status)] = (statuses[String(res.status)] ?? 0) + 1;
+        if (!res.ok) return [] as EspnTxRow[];
+        const json = await res.json();
+        return (json?.transactions ?? []) as EspnTxRow[];
+      } catch {
+        statuses.error = (statuses.error ?? 0) + 1;
+        return [] as EspnTxRow[];
+      }
+    })
+  );
+
+  const seen = new Map<string, EspnTransaction>();
+  const typesSeen: Record<string, number> = {};
+  for (const row of rows.flat()) {
+    typesSeen[`${row.type}/${row.status}`] = (typesSeen[`${row.type}/${row.status}`] ?? 0) + 1;
+    if (!row.id || row.status !== "EXECUTED" || !row.items?.length) continue;
+    if (seen.has(row.id)) continue;
+    seen.set(row.id, {
+      id: row.id,
+      type: row.type,
+      status: row.status,
+      teamId: row.teamId,
+      processDate: row.processDate ?? row.proposedDate,
+      items: row.items.map((i) => ({
+        playerId: i.playerId,
+        type: i.type,
+        fromTeamId: i.fromTeamId || undefined,
+        toTeamId: i.toTeamId || undefined,
+      })),
+    });
+  }
+
+  if (debug) {
+    debug.periodsTried = periods.length;
+    debug.httpStatuses = statuses;
+    debug.rowTypes = typesSeen;
+    debug.executedKept = seen.size;
+  }
+  return Array.from(seen.values());
+}
