@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import { getCurrentSeason, getTeams } from "@/lib/data";
+import { getCurrentSeason, getMatchups, getTeams } from "@/lib/data";
 import EmptyState from "@/components/EmptyState";
 import TeamLogo from "@/components/TeamLogo";
 
@@ -19,7 +19,30 @@ export default async function StandingsPage() {
   const season = await getCurrentSeason();
   if (!season) return <EmptyState title="No season synced yet" />;
 
-  const teams = await getTeams(season.id);
+  const [teams, matchups] = await Promise.all([getTeams(season.id), getMatchups(season.id)]);
+
+  // ESPN doesn't fill in streaks for category leagues, so work them out from
+  // finished matchups: the run of identical results (W/L/T) ending at the
+  // team's most recent decided week.
+  const streakByTeam = new Map<number, string>();
+  {
+    const results = new Map<number, string[]>();
+    const decided = matchups
+      .filter((m) => !m.playoff_tier_type && m.winner !== "UNDECIDED" && m.away_team_id != null)
+      .sort((a, b) => a.matchup_period_id - b.matchup_period_id);
+    for (const m of decided) {
+      const home = m.winner === "HOME" ? "W" : m.winner === "AWAY" ? "L" : "T";
+      const away = m.winner === "AWAY" ? "W" : m.winner === "HOME" ? "L" : "T";
+      results.set(m.home_team_id, [...(results.get(m.home_team_id) ?? []), home]);
+      results.set(m.away_team_id as number, [...(results.get(m.away_team_id as number) ?? []), away]);
+    }
+    for (const [id, seq] of results) {
+      const last = seq[seq.length - 1];
+      let n = 0;
+      for (let i = seq.length - 1; i >= 0 && seq[i] === last; i--) n++;
+      streakByTeam.set(id, `${last}${n}`);
+    }
+  }
   // Same win% (everyone at 0-0 preseason, or a genuine tie) falls back to
   // alphabetical — same rule as Power Rankings — instead of whatever order
   // the DB happened to return.
@@ -80,9 +103,10 @@ export default async function StandingsPage() {
                   {started ? `${(t.win_pct * 100).toFixed(1)}%` : "—"}
                 </td>
                 <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums">
-                  {t.streak_type && t.streak_length > 0
-                    ? `${t.streak_type === "WIN" ? "W" : "L"}${t.streak_length}`
-                    : "—"}
+                  {streakByTeam.get(t.espn_team_id) ??
+                    (t.streak_type && t.streak_length > 0
+                      ? `${t.streak_type === "WIN" ? "W" : "L"}${t.streak_length}`
+                      : "—")}
                 </td>
                 <td className="hidden sm:table-cell px-4 py-3 text-right tabular-nums">
                   {t.final_rank != null ? `#${t.final_rank}` : "—"}

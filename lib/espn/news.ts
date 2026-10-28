@@ -198,7 +198,7 @@ export async function fetchRosterRelevantNbaNews(
         link: a.links?.web?.href ?? null,
         imageUrl: a.images?.[0]?.url ?? null,
         publishedAt: a.published ?? new Date().toISOString(),
-        teamName: team ? `Rostered by ${team}` : null,
+        teamName: team ? `Rostered by ${team.name}` : null,
         teamLogo: team?.logo ?? null,
       });
     }

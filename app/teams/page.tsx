@@ -96,7 +96,7 @@ export default async function TeamsPage() {
                 </div>
 
                 <p className="text-xs text-muted mt-3">
-                  {started ? `Finish: ${reward.place}. ` : ""}Next year&rsquo;s auction budget:{" "}
+                  {started ? `Standing right now: ${reward.place}. ` : ""}Next year&rsquo;s auction budget{started ? " if it ended today" : ""}:{" "}
                   <span className="text-foreground font-medium">
                     {started
                       ? `$${teamBattle.nextYearBaseCap + reward.bonus} (${reward.bonus > 0 ? `+$${reward.bonus}` : "no bonus"})`

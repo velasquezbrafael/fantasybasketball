@@ -68,6 +68,10 @@ export default async function PlayoffOddsPage() {
   const decidedCount = matchups.filter((m) => m.winner !== "UNDECIDED" && !m.playoff_tier_type).length;
   const totalRegularSeasonGames = matchups.filter((m) => !m.playoff_tier_type).length;
   const seasonStarted = decidedCount > 0;
+  // "Clinched"/"Eliminated" come from the simulation, so they're only
+  // trustworthy once few enough weeks are left that results can't swing much.
+  const weeksLeft = new Set(remainingMatchups.map((m) => m.matchupPeriodId)).size;
+  const showLocks = weeksLeft <= 2;
 
   // Before any game is decided every team has the same strength and a 0-0
   // record, so the simulation would just be noise (plus a slight alphabetical
@@ -147,12 +151,12 @@ export default async function PlayoffOddsPage() {
               <div className="min-w-0">
                 <p className="font-medium truncate flex items-center gap-1.5">
                   {o.name}
-                  {o.clinched && (
+                  {o.clinched && showLocks && (
                     <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-accent-2/15 text-accent-2 shrink-0">
                       Clinched
                     </span>
                   )}
-                  {o.eliminated && seasonStarted && (
+                  {o.eliminated && seasonStarted && showLocks && (
                     <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-danger/15 text-danger shrink-0">
                       Eliminated
                     </span>

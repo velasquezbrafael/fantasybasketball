@@ -16,6 +16,7 @@
 export interface SimTeam {
   espnTeamId: number;
   name: string;
+  // Category tally (what ESPN shows as the record), not matchups won.
   wins: number;
   losses: number;
   ties: number;
@@ -94,6 +95,48 @@ function simulateGame(
   return roll < TIE_PROBABILITY + pHome ? "HOME" : "AWAY";
 }
 
+// ESPN's team record in this H2H Each Category league is a CATEGORY tally
+// (a 6-3 start is 6 cats won, 3 lost in ONE matchup), and the standings and
+// playoff seeding are ranked on that tally, not on matchups won. So each
+// remaining matchup has to be simulated category by category (9 of them) and
+// add cats to the running record. Adding a single "win" per matchup (what
+// this used to do) mixed units: it made a 6-3 team look unbeatable after one
+// week and handed out "Clinched" labels in October.
+const CATEGORIES_PER_MATCHUP = 9;
+// Real tie rate seen in this league's first week: ~4% of categories.
+const CAT_TIE_PROBABILITY = 0.04;
+// How much each point of Power Ranking score gap moves one category's win
+// chance. Real 9-cat leagues are tight: the best team wins roughly 58-62%
+// of its categories over a season and the worst ~38-42%. With scores
+// spanning ~0.5 from best to worst, 0.25 per point lands there (best vs.
+// worst = ~63% of cats, ~78% of matchups). Power scores are also built
+// partly from early records, so trusting them any harder than this makes
+// October look like a done deal. Clamped so nobody is ever a lock.
+const CAT_EDGE_PER_SCORE = 0.25;
+
+function categoryWinChance(strengthA: number, strengthB: number): number {
+  const q = 0.5 + (strengthA - strengthB) * CAT_EDGE_PER_SCORE;
+  return Math.min(0.75, Math.max(0.25, q));
+}
+
+function simulateCategories(
+  strengthHome: number,
+  strengthAway: number,
+  rng: () => number
+): { homeWins: number; awayWins: number; ties: number } {
+  const pHome = categoryWinChance(strengthHome, strengthAway) * (1 - CAT_TIE_PROBABILITY);
+  let homeWins = 0;
+  let awayWins = 0;
+  let ties = 0;
+  for (let c = 0; c < CATEGORIES_PER_MATCHUP; c++) {
+    const roll = rng();
+    if (roll < CAT_TIE_PROBABILITY) ties++;
+    else if (roll < CAT_TIE_PROBABILITY + pHome) homeWins++;
+    else awayWins++;
+  }
+  return { homeWins, awayWins, ties };
+}
+
 function winPct(wins: number, losses: number, ties: number): number {
   const games = wins + losses + ties;
   return games === 0 ? 0 : (wins + ties * 0.5) / games;
@@ -134,19 +177,15 @@ export function simulatePlayoffOdds(
       if (m.awayTeamId == null) continue; // bye week
       const homeStrength = strengthById.get(m.homeTeamId) ?? 0.5;
       const awayStrength = strengthById.get(m.awayTeamId) ?? 0.5;
-      const result = simulateGame(homeStrength, awayStrength, rng);
+      const cats = simulateCategories(homeStrength, awayStrength, rng);
       const home = record.get(m.homeTeamId)!;
       const away = record.get(m.awayTeamId)!;
-      if (result === "HOME") {
-        home.wins++;
-        away.losses++;
-      } else if (result === "AWAY") {
-        away.wins++;
-        home.losses++;
-      } else {
-        home.ties++;
-        away.ties++;
-      }
+      home.wins += cats.homeWins;
+      home.losses += cats.awayWins;
+      home.ties += cats.ties;
+      away.wins += cats.awayWins;
+      away.losses += cats.homeWins;
+      away.ties += cats.ties;
     }
 
     // Final seeding: win% desc, alphabetical tiebreak — same rule used

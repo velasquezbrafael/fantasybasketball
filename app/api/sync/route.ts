@@ -143,7 +143,10 @@ async function syncSeason(
   // (see the comment on VIEWS.transactions) — it lives in a separate
   // activity-feed endpoint that only exists for the currently-live
   // season, so this is a no-op (not an error) for historical seasons.
-  const transactions = historical ? [] : await fetchRecentActivity(season, auth);
+  const activityTypesSeen: Record<number, number> = {};
+  const transactions = historical
+    ? []
+    : await fetchRecentActivity(season, auth, 100, activityTypesSeen);
   if (transactions.length > 0) {
     const allPlayerIds = transactions.flatMap(
       (t) => t.items?.map((i) => i.playerId) ?? []
@@ -205,6 +208,9 @@ async function syncSeason(
     matchups: matchups.length,
     transactions: transactions.length,
     draftPicks,
+    // ESPN activity message-type codes seen this sync (code -> count). If
+    // League News is empty but this isn't, one of these is the missing code.
+    activityTypesSeen,
     ...(draftNote ? { draftNote } : {}),
   };
 }

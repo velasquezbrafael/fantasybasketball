@@ -149,7 +149,12 @@ interface EspnActivityTopic {
 export async function fetchRecentActivity(
   season: number,
   auth: EspnAuth,
-  limit = 50
+  limit = 50,
+  // Optional: filled with how many messages of each ESPN message-type code
+  // came back (known or not). Lets the sync report codes we don't map yet —
+  // e.g. if this league's FAAB claims use a different code than ESPN's
+  // regular waiver add, they show up here instead of vanishing silently.
+  typesSeen?: Record<number, number>
 ): Promise<EspnTransaction[]> {
   const filter = {
     topics: {
@@ -159,7 +164,10 @@ export async function fetchRecentActivity(
       offset: 0,
       sortMessageDate: { sortPriority: 1, sortAsc: false },
       sortTopicDate: { sortPriority: 2, sortAsc: false },
-      filterIncludeMessageTypeIds: { value: [178, 179, 180, 181, 239] },
+      // No message-type filter on purpose: filtering to a fixed list of codes
+      // dropped every FAAB (budget) claim in this league's first week, so the
+      // News page showed zero moves. We take everything and only turn the
+      // codes we recognise (ACTIVITY_MESSAGE_TYPE) into transactions.
     },
   };
 
@@ -191,6 +199,12 @@ export async function fetchRecentActivity(
   const transactions: EspnTransaction[] = [];
   for (const topic of topics) {
     if (topic.type !== "ACTIVITY_TRANSACTIONS" || !topic.messages) continue;
+
+    if (typesSeen) {
+      for (const m of topic.messages) {
+        if (m.type != null) typesSeen[m.type] = (typesSeen[m.type] ?? 0) + 1;
+      }
+    }
 
     const items = topic.messages
       .map((m) => {
